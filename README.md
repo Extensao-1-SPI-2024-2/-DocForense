@@ -13,8 +13,8 @@ Este é o guia destinado aos desenvolvedores que estarão contribuindo com o des
 1. [Workflow do repositório](#workflow-do-repositório)
 2. [Estratégia de branching](#estratégia-de-branching)
 3. [Criando uma nova branch](#criando-uma-nova-branch)
-4. [Padronização de commits](#padronização-de-commits)
-5. [Criando um Merge Request](#criando-um-Merge-Request)
+4. [Diretrizes para Mensagens de Commit](#Diretrizes-para-Mensagens-de-Commit)
+5. [Criando um Merge Request (MR)](#criando-um-Merge-Request-(MR))
 6. [Documentação](#documentação)
 
 ## Workflow do Repositório
@@ -25,7 +25,7 @@ Nosso repositório segue um fluxo baseado no Git flow com duas branches principa
 
 Por favor, **sempre trabalhe na branch `develop`** e **nunca mescle diretamente em `main`**.
 
-## Estratégia de Branches
+## Estratégia de branching
 
 1. **Branch Principal**: 
    - `main` deve sempre conter o código estável e pronto para produção.
