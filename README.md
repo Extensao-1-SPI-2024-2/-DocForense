@@ -10,11 +10,11 @@ Este é o guia destinado aos desenvolvedores que estarão contribuindo com o des
 
 ## Sumário
 
-1. [Workflow do repositório](#workflow-do-repositório)
-2. [Estratégia de branching](#estratégia-de-branching)
-3. [Criando uma nova branch](#criando-uma-nova-branch)
-4. [Diretrizes para Mensagens de Commit](#Diretrizes-para-Mensagens-de-Commit)
-5. [Criando um Merge Request (MR)](#criando-um-Merge-Request-(MR))
+1. [Workflow do Repositório](#workflow-do-repositório)
+2. [Estratégia de Branching](#estratégia-de-branching)
+3. [Criando uma Nova Branch](#criando-uma-nova-branch)
+4. [Padronização de Commits](#padronização-de-commits)
+5. [Criando um Merge Request](#criando-um-merge-request)
 6. [Documentação](#documentação)
 
 ## Workflow do Repositório
@@ -25,7 +25,7 @@ Nosso repositório segue um fluxo baseado no Git flow com duas branches principa
 
 Por favor, **sempre trabalhe na branch `develop`** e **nunca mescle diretamente em `main`**.
 
-## Estratégia de branching
+## Estratégia de Branching
 
 1. **Branch Principal**: 
    - `main` deve sempre conter o código estável e pronto para produção.
@@ -68,7 +68,7 @@ Ao trabalhar em novas funcionalidades ou correções:
    git push origin feature/nome-da-sua-branch
    ```
 
-## Diretrizes para Mensagens de Commit
+## Padronização de Commits
 
 - Use **mensagens de commit claras e concisas**.
 - Siga o formato:
@@ -85,7 +85,7 @@ Ao trabalhar em novas funcionalidades ou correções:
 - Mantenha a primeira linha da mensagem de commit com menos de 50 caracteres.
 - Use o corpo da mensagem para explicações mais detalhadas (se necessário).
 
-## Criando um Merge Request (MR)
+## Criando um Merge Request
 
 1. **Sempre direcione o MR para a branch `develop`**, nunca para `main`.
 2. Inclua uma descrição detalhada das alterações no campo de descrição do MR, seguindo o modelo apresentado.
