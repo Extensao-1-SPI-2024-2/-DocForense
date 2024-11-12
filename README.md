@@ -106,10 +106,4 @@ Ao trabalhar em novas funcionalidades ou correções:
 - Atualize o `README.md` se necessário ou adicione nova documentação na pasta `docs/`.
 - Sempre assegure-se de que sua documentação seja clara e fácil de entender para outros desenvolvedores.
 
-## Recursos Adicionais
-
-- [Documentação do GitLab Workflow](https://docs.gitlab.com/ee/gitlab-basics/)
-- [Tutorial Git Flow](https://www.atlassian.com/git/tutorials/comparing-workflows/gitflow-workflow)
-- [Escrevendo Boas Mensagens de Commit](https://chris.beams.io/posts/git-commit/)
-
 Obrigado por contribuir para o DocForense!
