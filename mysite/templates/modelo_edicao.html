@@ -5,7 +5,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>DocForense - Criação de Modelo</title>
+    <title>DocForense - {% if readonly %}Visualização{% else %}Edição{% endif %} de Modelo</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous" />
     <style>
       body,
@@ -142,34 +142,40 @@
       <a href="/modelo/criar">Novo modelo</a>
       <a href="/logout">Sair</a>
     </div>
+    <div class="container mt-5">
+      <h1 class="mb-4">{% if readonly %}Visualização{% else %}Edição{% endif %} de Modelo</h1>
 
-    <div class="main-content mt-5">
-      <div class="container">
-        <h1 class="mb-4">Criar de Modelo</h1>
+      {% if not readonly %}
         <div class="d-flex justify-content-end">
             <button id="salvar-modelo" class="btn btn-light mb-3">Salvar Modelo</button>
         </div>
+      {% endif %}
 
-        <form id="form-modelo" method="POST" class="p-5 bg-white" action="/modelo/salvar">
-          {% csrf_token %}
-          {% if messages %}
-              {% for message in messages %}
-                <div class="alert alert-danger" role="alert">{{ message }}</div>
-              {% endfor %}
-          {% endif %}
-          <div class="mb-3">
-            <label for="descricaoModelo" class="form-label">Descrição do Modelo*</label>
-            <input type="text" name="name" class="form-control" id="descricaoModelo" maxlength="100" required placeholder="Descrição do texto..." />
-          </div>
-          <textarea name="value"></textarea>
-        </form>
-      </div>
+      <form id="form-modelo" class="p-5 bg-white" method="POST" action="">
+        {% csrf_token %}
+        {% if messages %}
+          {% for message in messages %}
+            <div class="alert alert-danger" role="alert">{{ message }}</div>
+          {% endfor %}
+        {% endif %}
+
+        <div class="mb-3">
+          <label for="descricaoModelo" class="form-label">Descrição do Modelo*</label>
+          <input type="text" name="name" class="form-control" id="descricaoModelo" {% if readonly %}disabled{% endif %} maxlength="100" required placeholder="Descrição do texto..." value="{{ modelo.name }}" />
+        </div>
+
+        <div class="mb-3">
+          <label for="valueModelo" class="form-label">Conteúdo do Modelo*</label>
+          <textarea name="value" id="valueModelo" class="form-control" required>{{ modelo.value }}</textarea>
+        </div>
+      </form>
     </div>
 
     <script src="{% static 'tinymce/js/tinymce/tinymce.min.js' %}"></script>
     <script>
       tinymce.init({
         selector: 'textarea',
+        readonly: {% if readonly %}true{% else %}false{% endif %},
         promotion: false,
         setup: function (editor) {
           // Configuração personalizada de merge tags

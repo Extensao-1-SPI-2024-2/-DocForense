@@ -24,7 +24,12 @@ urlpatterns = [
     path('admin/', admin.site.urls, name='admin'),
     path('api/galileu/procedimento_pericial/<int:id>/', views.procedimento_pericial, name='procedimento_pericial'),
     path('api/word/gerar_documento_teste/', views.gerar_arquivo_word_teste, name='gerar_documento_teste'),
-    path('modelo/criar/', views.minha_pagina, name='minha_pagina'),
+    path('modelo/criar/', views.create_modelo, name='minha_pagina'),
     path('login/', views.login, name='login'),
-    path('logout/', views.logout, name='logout')
+    path('logout/', views.logout, name='logout'),
+    path('modelo/salvar', views.create_modelo, name='salvar_modelo'),
+    path('modelo/listagem', views.listagem, name='listagem_modelo'),
+    path('modelo/editar/<int:modelo_id>/', views.editar_modelo, name='editar_modelo'),
+    path('modelo/visualizar/<int:modelo_id>/', views.visualizar_modelo, name='visualizar_modelo'),
+    path('modelo/deletar/<int:modelo_id>/', views.deletar_modelo, name='deletar_modelo'),
 ]
