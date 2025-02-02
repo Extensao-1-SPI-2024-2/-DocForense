@@ -1,4 +1,5 @@
 from django.http import JsonResponse
+from django.contrib.auth import authenticate, login, logout
 from .services import GalileuAPIService
 from .services import WordFileGenerator
 from django.http import HttpResponse
@@ -6,7 +7,11 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.http import HttpResponse
 from .models import Modelo
 from django.contrib.auth.models import User
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render, redirect
+from django.contrib import messages
 
+@login_required(login_url='/login')
 def procedimento_pericial(request, id):
     if request.method == 'GET':
         service = GalileuAPIService()
@@ -19,6 +24,7 @@ def procedimento_pericial(request, id):
     else:
         return JsonResponse({'error': 'Method not allowed'}, status=405)
     
+@login_required(login_url='/login')
 def gerar_arquivo_word_teste(request):
     
     data = {
@@ -39,28 +45,42 @@ def gerar_arquivo_word_teste(request):
 
     return response
 
-from django.shortcuts import render, redirect
-from django.contrib import messages
 
-def login(request):
+def logininternal(request):
     if request.method == 'GET':
         if 'logged_in' in request.session and request.session['logged_in']:
             return redirect('/')
         
     if request.method == 'POST':
+        user, created = User.objects.get_or_create(
+            username='admindoc1',
+            defaults={
+                'email': 'admin@docforense.com.br',
+                'first_name': 'Master',
+                'last_name': 'Administrador',
+            }
+        )
+
+        if created:
+            user.set_password('admindoc1')
+            user.save()
+
         username = request.POST.get('username')
         password = request.POST.get('password')
 
-        # TODO Por enquanto temos somente esse admin hardcode até recebemos a comunicação do Galileu
-        if username == 'admin' and password == 'admin':
+        user = authenticate(request, username=username, password=password)
+
+        if user is not None:
+            login(request, user)
             request.session['logged_in'] = True
-            request.session['login'] = request.POST.get('username')
+            request.session['login'] = username
             return redirect('/')
         else:
             messages.error(request, "Usuário ou senha incorretos.")
 
     return render(request, 'login.html')
 
+@login_required(login_url='/login')
 def index(request):
     if request.method == 'GET':
         if not request.session.get('logged_in', False):
@@ -69,26 +89,25 @@ def index(request):
     
     return render(request, 'index.html')
 
-def logout(request):
+@login_required(login_url='/login')
+def logoutinternal(request):
     request.session.pop('logged_in', None)
     request.session.pop('login', None)
+    logout(request)
     return redirect('/login')
 
+@login_required(login_url='/login')
 def create_modelo(request):
     if request.method == 'POST':
         
         name = request.POST.get('name')
         value = request.POST.get('value')
-        #user_id = request.POST.get('user_id')
 
         if not all([name, value]):
             messages.error(request, "Todos os campos são obrigatórios.")
-            return redirect('/modelo/criar')
+            return redirect('/modelo/laudo/criar')
         
         try:
-            #user = User.objects.get(id=user_id)
-            
-            #criando usuário ao vivo enquanto não tem sessao
             user, created = User.objects.get_or_create(
                 username='usuario_teste',
                 defaults={
@@ -106,16 +125,17 @@ def create_modelo(request):
             )
 
             messages.success(request, "Modelo criado com sucesso!")
-            return redirect('/modelo/listagem')
+            return redirect('/modelo/laudo/listagem')
         except User.DoesNotExist:
             messages.error(request, "Usuário não encontrado")
-            return redirect('/modelo/criar')
+            return redirect('/modelo/laudo/criar')
         except Exception as e:
             messages.error(request, f"Erro: {str(e)}")
-            return redirect('/modelo/criar')
+            return redirect('/modelo/laudo/criar')
         
     return render(request, 'modelo.html')
 
+@login_required(login_url='/login')
 def listagem(request):
     if request.method == 'GET':
         if not request.session.get('logged_in', False):
@@ -126,6 +146,7 @@ def listagem(request):
 
     return render(request, 'listagem.html', {'modelos': modelos})
 
+@login_required(login_url='/login')
 def editar_modelo(request, modelo_id):
     modelo = get_object_or_404(Modelo, id=modelo_id)
 
@@ -135,7 +156,7 @@ def editar_modelo(request, modelo_id):
 
         if not all([name, value]):
             messages.error(request, "Todos os campos são obrigatórios.")
-            return redirect(f'/modelo/editar/{modelo_id}')
+            return redirect(f'/modelo/laudo/editar/{modelo_id}')
 
         try:
             modelo.name = name
@@ -143,17 +164,19 @@ def editar_modelo(request, modelo_id):
             modelo.save()
 
             messages.success(request, "Modelo atualizado com sucesso!")
-            return redirect('/modelo/listagem')
+            return redirect('/modelo/laudo/listagem')
         except Exception as e:
             messages.error(request, f"Erro ao atualizar o modelo: {str(e)}")
-            return redirect(f'/modelo/editar/{modelo_id}')
+            return redirect(f'/modelo/laudo/editar/{modelo_id}')
     
     return render(request, 'modelo_edicao.html', {'modelo': modelo, 'readonly': False})
 
+@login_required(login_url='/login')
 def visualizar_modelo(request, modelo_id):
     modelo = get_object_or_404(Modelo, id=modelo_id)
     return render(request, 'modelo_edicao.html', {'modelo': modelo, 'readonly': True})
 
+@login_required(login_url='/login')
 def deletar_modelo(request, modelo_id):
     modelo = get_object_or_404(Modelo, id=modelo_id)
     
@@ -163,4 +186,4 @@ def deletar_modelo(request, modelo_id):
     except Exception as e:
         messages.error(request, f"Erro ao deletar o modelo: {str(e)}")
     
-    return redirect('/modelo/listagem')
+    return redirect('/modelo/laudo/listagem')
