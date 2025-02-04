@@ -26,6 +26,25 @@
     {% endfor %}
   {% endif %}
 
+  <!-- Modal de Confirmação -->
+<div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-labelledby="confirmDeleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="confirmDeleteModalLabel"><strong>Você está prestes a excluir um registro. </strong></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <p>Você deseja mesmo realizar esta ação?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <a id="confirmDeleteBtn" href="#" class="btn btn-danger">Confirmar Exclusão</a>
+            </div>
+        </div>
+    </div>
+</div>
+
   <!-- Modal -->
   <div class="modal fade" id="modalTipo" tabindex="-1" aria-labelledby="modalTipoLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
@@ -94,9 +113,11 @@
               <td>{{ modelo.date_inclusion|date:'d/m/Y H:i' }}</td>
               <td class="is-narrow">
                 <div class="text-end">
-                  <a href="/modelo/vestigio/visualizar/{{ modelo.id }}"><button class="btn btn-success btn-sm"><i class="fas fa-eye"></i></button></a>
-                  <a href="/modelo/vestigio/editar/{{ modelo.id }}"><button class="btn btn-primary btn-sm"><i class="fas fa-edit"></i></button></a>
-                  <a href="/modelo/vestigio/deletar/{{ modelo.id }}"><button class="btn btn-danger btn-sm"><i class="fas fa-trash"></i></button></a>
+                    <a href="/modelo/vestigio/visualizar/{{ modelo.id }}"><button class="btn btn-success btn-sm"><i class="fas fa-eye"></i></button></a>
+                    <a href="/modelo/vestigio/editar/{{ modelo.id }}"><button class="btn btn-primary btn-sm"><i class="fas fa-edit"></i></button></a>
+                    <button class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#confirmDeleteModal" data-url="/modelo/vestigio/deletar/{{ modelo.id }}">
+                        <i class="fas fa-trash"></i>
+                    </button>
                 </div>
               </td>
             </tr>
@@ -135,6 +156,18 @@
     
             // Redireciona para a URL concatenada
             window.location.href = `/modelo/vestigio/criar/${selectedValue}`;
+        });
+    });
+
+    document.addEventListener("DOMContentLoaded", function() {
+        var confirmDeleteModal = document.getElementById('confirmDeleteModal');
+        var confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+
+        confirmDeleteModal.addEventListener('show.bs.modal', function(event) {
+            var button = event.relatedTarget;
+            var deleteUrl = button.getAttribute('data-url');
+
+            confirmDeleteBtn.setAttribute('href', deleteUrl);
         });
     });
     
