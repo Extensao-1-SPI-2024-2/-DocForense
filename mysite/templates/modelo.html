@@ -27,6 +27,17 @@
         <label for="descricaoModelo" class="form-label">Descrição do Modelo*</label>
         <input type="text" name="name" class="form-control" id="descricaoModelo" maxlength="100" required placeholder="Descrição do texto..." />
       </div>
+        <div class="mb-3">
+            <label for="visibilidadeModelo" class="form-label">Visibilidade*</label>
+            <select name="type" id="visibilidadeModelo" required class="form-select">
+                <option value="">Selecione uma opção...</option>
+                {% for value, label in type_choices %}
+                    <option value="{{ value }}" {% if modelo and modelo.type == value %}selected{% endif %}>
+                        {{ label }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
       <textarea name="value"></textarea>
     </form>
   </div>

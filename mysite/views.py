@@ -1,3 +1,4 @@
+import json
 from django.http import JsonResponse
 from django.contrib.auth import authenticate, login, logout
 from .services import GalileuAPIService
@@ -5,7 +6,7 @@ from .services import WordFileGenerator
 from django.http import HttpResponse
 from django.shortcuts import render, get_object_or_404, redirect
 from django.http import HttpResponse
-from .models import Modelo
+from .models import Modelo, ModeloVestigio, Variavel
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect
@@ -102,26 +103,18 @@ def create_modelo(request):
         
         name = request.POST.get('name')
         value = request.POST.get('value')
+        type =  request.POST.get('type')
 
-        if not all([name, value]):
+        if not all([name, value, type]):
             messages.error(request, "Todos os campos são obrigatórios.")
             return redirect('/modelo/laudo/criar')
         
         try:
-            user, created = User.objects.get_or_create(
-                username='usuario_teste',
-                defaults={
-                    'password': 'senha123',
-                    'email': 'teste@exemplo.com',
-                    'first_name': 'Teste',
-                    'last_name': 'Usuário',
-                }
-            )
-
             Modelo.objects.create(
                 name=name,
                 value=value,
-                user_inclusion=user
+                type=type,
+                user_inclusion=request.user
             )
 
             messages.success(request, "Modelo criado com sucesso!")
@@ -133,7 +126,54 @@ def create_modelo(request):
             messages.error(request, f"Erro: {str(e)}")
             return redirect('/modelo/laudo/criar')
         
-    return render(request, 'modelo.html')
+    return render(request, 'modelo.html', {
+        'type_choices': ModeloVestigio.TYPE_CHOICES,
+    })
+
+@login_required(login_url='/login')
+def create_modelo_vestigio(request, type):
+    tipo_descricao = next((desc for value, desc in Variavel.TIPO_CHOICES if value == type), None)
+
+    if not tipo_descricao:
+        messages.error(request, "Esse tipo de vestígio não foi encontrado.")
+        return redirect('/modelo/vestigio/listagem')
+    
+    if request.method == 'POST':
+        
+        name = request.POST.get('name')
+        value = request.POST.get('value')
+        type_view =  request.POST.get('type')
+
+        if not all([name, value, type_view]):
+            messages.error(request, "Todos os campos são obrigatórios.")
+            return redirect('/modelo/vestigio/criar')
+        
+        try:
+            ModeloVestigio.objects.create(
+                name=name,
+                value=value,
+                type=type_view,
+                type_vestigio=type,
+                user_inclusion=request.user
+            )
+
+            messages.success(request, "Modelo de vestígio criado com sucesso!")
+            return redirect('/modelo/vestigio/listagem')
+        except User.DoesNotExist:
+            messages.error(request, "Usuário não encontrado")
+            return redirect('/modelo/vestigio/criar')
+        except Exception as e:
+            messages.error(request, f"Erro: {str(e)}")
+            return redirect('/modelo/vestigio/criar')
+    
+    variaveis = Variavel.objects.filter(tipo=type).values('variavel', 'descricao')
+        
+    return render(request, 'modelo_vestigio.html', {
+        'variaveis': json.dumps(list(variaveis)),
+        'tipo': type,
+        'tipo_descricao': tipo_descricao,
+        'type_choices': ModeloVestigio.TYPE_CHOICES
+    })
 
 @login_required(login_url='/login')
 def listagem(request):
@@ -147,20 +187,35 @@ def listagem(request):
     return render(request, 'listagem.html', {'modelos': modelos})
 
 @login_required(login_url='/login')
+def listagemVestigio(request):
+    if request.method == 'GET':
+        if not request.session.get('logged_in', False):
+            messages.error(request, "É necessário realizar o login.")
+            return redirect('/login')
+    
+    modelos = ModeloVestigio.objects.all()
+
+    return render(request, 'listagem_vestigio.html', {
+        'modelos': modelos
+    })
+
+@login_required(login_url='/login')
 def editar_modelo(request, modelo_id):
     modelo = get_object_or_404(Modelo, id=modelo_id)
 
     if request.method == 'POST':
         name = request.POST.get('name')
         value = request.POST.get('value')
+        type_view =  request.POST.get('type')
 
-        if not all([name, value]):
+        if not all([name, value, type_view]):
             messages.error(request, "Todos os campos são obrigatórios.")
             return redirect(f'/modelo/laudo/editar/{modelo_id}')
 
         try:
             modelo.name = name
             modelo.value = value
+            modelo.type = type_view
             modelo.save()
 
             messages.success(request, "Modelo atualizado com sucesso!")
@@ -169,12 +224,66 @@ def editar_modelo(request, modelo_id):
             messages.error(request, f"Erro ao atualizar o modelo: {str(e)}")
             return redirect(f'/modelo/laudo/editar/{modelo_id}')
     
-    return render(request, 'modelo_edicao.html', {'modelo': modelo, 'readonly': False})
+    return render(request, 'modelo_edicao.html', {
+        'modelo': modelo, 
+        'readonly': False,
+        'type_choices': ModeloVestigio.TYPE_CHOICES,
+    })
+
+@login_required(login_url='/login')
+def editar_modelo_vestigio(request, modelo_id):
+    modelo = get_object_or_404(ModeloVestigio, id=modelo_id)
+
+    if request.method == 'POST':
+        name = request.POST.get('name')
+        value = request.POST.get('value')
+        type_view =  request.POST.get('type')
+
+        if not all([name, value, type_view]):
+            messages.error(request, "Todos os campos são obrigatórios.")
+            return redirect(f'/modelo/vestigio/editar/{modelo_id}')
+
+        try:
+            modelo.name = name
+            modelo.value = value
+            modelo.type = type_view
+            modelo.save()
+
+            messages.success(request, "Modelo de Vestígio atualizado com sucesso!")
+            return redirect('/modelo/vestigio/listagem')
+        except Exception as e:
+            messages.error(request, f"Erro ao atualizar o modelo de vestígio: {str(e)}")
+            return redirect(f'/modelo/vestigio/editar/{modelo_id}')
+        
+    variaveis = Variavel.objects.filter(tipo=modelo.type_vestigio).values('variavel', 'descricao')
+    
+    return render(request, 'modelo_vestigio_edicao.html', {
+        'modelo': modelo, 
+        'readonly': False,
+        'variaveis': json.dumps(list(variaveis)),
+        'tipo': modelo.type_vestigio,
+        'type_choices': ModeloVestigio.TYPE_CHOICES,
+        'tipo_descricao': modelo.get_type_vestigio_display()
+    })
 
 @login_required(login_url='/login')
 def visualizar_modelo(request, modelo_id):
     modelo = get_object_or_404(Modelo, id=modelo_id)
-    return render(request, 'modelo_edicao.html', {'modelo': modelo, 'readonly': True})
+    return render(request, 'modelo_edicao.html', {
+        'modelo': modelo, 
+        'readonly': True,
+        'type_choices': ModeloVestigio.TYPE_CHOICES,
+    })
+    
+@login_required(login_url='/login')
+def visualizar_modelo_vestigio(request, modelo_id):
+    modelo = get_object_or_404(ModeloVestigio, id=modelo_id)
+    return render(request, 'modelo_vestigio_edicao.html', {
+        'modelo': modelo, 
+        'readonly': True,
+        'type_choices': ModeloVestigio.TYPE_CHOICES,
+        'tipo_descricao': modelo.get_type_vestigio_display()
+    })
 
 @login_required(login_url='/login')
 def deletar_modelo(request, modelo_id):
@@ -187,3 +296,15 @@ def deletar_modelo(request, modelo_id):
         messages.error(request, f"Erro ao deletar o modelo: {str(e)}")
     
     return redirect('/modelo/laudo/listagem')
+
+@login_required(login_url='/login')
+def deletar_modelo_vestigio(request, modelo_id):
+    modelo = get_object_or_404(ModeloVestigio, id=modelo_id)
+    
+    try:
+        modelo.delete()
+        messages.success(request, "Modelo de Vestígio deletado com sucesso!")
+    except Exception as e:
+        messages.error(request, f"Erro ao deletar o modelo de vestígio: {str(e)}")
+    
+    return redirect('/modelo/vestigio/listagem')

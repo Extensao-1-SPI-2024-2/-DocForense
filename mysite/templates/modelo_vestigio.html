@@ -1,0 +1,199 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}
+  Criar Modelo de Vestígio - {{ tipo_descricao }}
+{% endblock %}
+{% block maintitle %}
+  Criar Modelo de Vestígio - {{ tipo_descricao }}
+{% endblock %}
+
+{% block breadcrumb %}
+  <li class="breadcrumb-item">
+    <a href="/modelo/vestigio/listagem">Modelos de Vestígio</a>
+  </li>
+  <li class="breadcrumb-item">
+    <a href="/modelo/vestigio/listagem">Listagem</a>
+  </li>
+  <li class="breadcrumb-item active" aria-current="page">Criar de Modelo - {{ tipo_descricao }}</li>
+{% endblock %}
+
+{% block content %}
+  <div class="d-flex justify-content-end">
+    <button id="salvar-modelo" style="margin-right: 5px;" class="btn btn-primary mb-3"><i class="fas fa-save"></i> Salvar Modelo</button>
+    <a href="/modelo/vestigio/listagem"><button class="btn btn-secondary mb-3"><i class="fas fa-backspace"></i> Voltar</button></a>
+  </div>
+
+  <div class="card p-4">
+    <form id="form-modelo" method="POST" action="/modelo/vestigio/salvar/{{ tipo }}/">
+      {% csrf_token %}
+      {% if messages %}
+        {% for message in messages %}
+          <div class="alert alert-danger" role="alert">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+      <div class="mb-3">
+        <label for="descricaoModelo" class="form-label">Descrição do Modelo*</label>
+        <input type="text" name="name" class="form-control" id="descricaoModelo" maxlength="100" required placeholder="Descrição do texto..." />
+      </div>
+        <div class="mb-3">
+            <label for="visibilidadeModelo" class="form-label">Visibilidade*</label>
+            <select name="type" id="visibilidadeModelo" required class="form-select">
+                <option value="">Selecione uma opção...</option>
+                {% for value, label in type_choices %}
+                    <option value="{{ value }}" {% if modelo and modelo.type == value %}selected{% endif %}>
+                        {{ label }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+      <textarea name="value"></textarea>
+    </form>
+  </div>
+
+  <script src="{% static 'tinymce/js/tinymce/tinymce.min.js' %}"></script>
+  <script>
+    tinymce.init({
+      selector: 'textarea',
+      promotion: false,
+      setup: function (editor) {
+        editor.ui.registry.addMenuButton('merge_tags', {
+          text: 'Tags',
+          fetch: function (callback) {
+            const variaveis = JSON.parse('{{ variaveis|safe }}')
+    
+            const items = variaveis.map((varObj) => ({
+              type: 'menuitem',
+              text: varObj.descricao,
+              value: varObj.variavel
+            }))
+            callback(
+              items.map((item) => ({
+                ...item,
+                onAction: () => {
+                  editor.insertContent(`<span style="font-weight: 600; color: #1c5fa7" class="merge-tag" contenteditable="false">${item.value}</span>`)
+                }
+              }))
+            )
+          }
+        })
+    
+        editor.on('init', function () {
+          // Adiciona a classe de estilo ao contêiner do editor
+          const body = editor.getBody()
+          body.classList.add('tinymce-a4')
+        })
+      },
+      plugins: 'preview importcss searchreplace autolink autosave save directionality code visualblocks visualchars fullscreen image link media codesample table charmap pagebreak nonbreaking anchor insertdatetime advlist lists wordcount help charmap quickbars emoticons accordion',
+      editimage_cors_hosts: ['picsum.photos'],
+      menubar: 'file edit view insert format tools table help',
+      toolbar: 'merge_tags | undo redo | accordion accordionremove | blocks fontfamily fontsize | bold italic underline strikethrough | align numlist bullist | link image | table media | lineheight outdent indent| forecolor backcolor removeformat | charmap emoticons | code fullscreen preview | save print | pagebreak anchor codesample | ltr rtl',
+      autosave_ask_before_unload: true,
+      autosave_interval: '30s',
+      autosave_prefix: '{path}{query}-{id}-',
+      autosave_restore_when_empty: false,
+      autosave_retention: '2m',
+      image_advtab: true,
+      language: 'pt_BR',
+      link_list: [
+        { title: 'My page 1', value: 'https://www.tiny.cloud' },
+        { title: 'My page 2', value: 'http://www.moxiecode.com' }
+      ],
+      image_list: [
+        { title: 'My page 1', value: 'https://www.tiny.cloud' },
+        { title: 'My page 2', value: 'http://www.moxiecode.com' }
+      ],
+      image_class_list: [
+        { title: 'None', value: '' },
+        { title: 'Some class', value: 'class-name' }
+      ],
+      importcss_append: true,
+      file_picker_callback: (callback, value, meta) => {
+        /* Provide file and text for the link dialog */
+        if (meta.filetype === 'file') {
+          callback('https://www.google.com/logos/google.jpg', { text: 'My text' })
+        }
+    
+        /* Provide image and alt text for the image dialog */
+        if (meta.filetype === 'image') {
+          callback('https://www.google.com/logos/google.jpg', { alt: 'My alt text' })
+        }
+    
+        /* Provide alternative source and posted for the media dialog */
+        if (meta.filetype === 'media') {
+          callback('movie.mp4', { source2: 'alt.ogg', poster: 'https://www.google.com/logos/google.jpg' })
+        }
+      },
+      height: 1000,
+      image_caption: true,
+      quickbars_selection_toolbar: 'bold italic | quicklink h2 h3 blockquote quickimage quicktable',
+      noneditable_class: 'mceNonEditable',
+      toolbar_mode: 'sliding',
+      contextmenu: 'link image table',
+      content_style: `
+                body {
+                    background: #fff;
+                }
+        
+                /* Disable the blue "focus" border for the editable region */
+                .editable-section:focus-visible {
+                    outline: none !important;
+                }
+        
+                .header,
+                .footer {
+                    font-size: 0.8rem;
+                    color: #ddd;
+                }
+        
+                .header {
+                    display: flex;
+                    justify-content: space-between;
+                    padding: 0 0 1rem 0;
+                }
+        
+                .header .right-text {
+                    text-align: right;
+                }
+        
+                .footer {
+                    padding:2rem 0 0 0;
+                    text-align: center;
+                }
+        
+                /* Apply page-like styling */
+                @media (min-width: 840px) {
+                    html {
+                    background: #eceef4;
+                    min-height: 100%;
+                    padding: 0.5rem;
+                    }
+        
+                    body {
+                    background-color: #fff;
+                    box-shadow: 0 0 4px rgba(0, 0, 0, .15);
+                    box-sizing: border-box;
+                    margin: 1rem auto 0;
+                    max-width: 820px;
+                    min-height: calc(100vh - 1rem);
+                    padding: 2rem 6rem 2rem 6rem;
+                    }
+                }
+            `
+    })
+  </script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const salvarBotao = document.querySelector('#salvar-modelo')
+      const formModelo = document.querySelector('#form-modelo')
+    
+      salvarBotao.addEventListener('click', function () {
+        if (formModelo.checkValidity()) {
+          formModelo.submit()
+        } else {
+          formModelo.reportValidity()
+        }
+      })
+    })
+  </script>
+  <script src="{% static 'tinymce/js/tinymce/plugins/a4/plugin.js' %}"></script>
+{% endblock %}

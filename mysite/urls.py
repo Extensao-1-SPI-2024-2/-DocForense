@@ -28,8 +28,14 @@ urlpatterns = [
     path('logout/', views.logoutinternal, name='logout'),
     path('modelo/laudo/criar/', views.create_modelo, name='minha_pagina'),
     path('modelo/laudo/salvar', views.create_modelo, name='salvar_modelo'),
-    path('modelo/laudo/listagem', views.listagem, name='listagem__laudo_modelo'),
+    path('modelo/vestigio/criar/<int:type>/', views.create_modelo_vestigio, name='criar_modelo_vestigio'),
+    path('modelo/vestigio/salvar/<int:type>/', views.create_modelo_vestigio, name='salvar_modelo_vestigio'),
+    path('modelo/laudo/listagem', views.listagem, name='listagem_laudo_modelo'),
+    path('modelo/vestigio/listagem', views.listagemVestigio, name='listagem_vestigio_modelo'),
     path('modelo/laudo/editar/<int:modelo_id>/', views.editar_modelo, name='editar_modelo'),
     path('modelo/laudo/visualizar/<int:modelo_id>/', views.visualizar_modelo, name='visualizar_modelo'),
     path('modelo/laudo/deletar/<int:modelo_id>/', views.deletar_modelo, name='deletar_modelo'),
+    path('modelo/vestigio/editar/<int:modelo_id>/', views.editar_modelo_vestigio, name='editar_modelo_vestigio'),
+    path('modelo/vestigio/visualizar/<int:modelo_id>/', views.visualizar_modelo_vestigio, name='visualizar_modelo_vestigio'),
+    path('modelo/vestigio/deletar/<int:modelo_id>/', views.deletar_modelo_vestigio, name='deletar_modelo_vestigio')
 ]

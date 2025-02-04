@@ -1,13 +1,13 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block title %}{% if readonly %}Visualização{% else %}Edição{% endif %} Modelo{% endblock %}
-{% block maintitle %}{% if readonly %}Visualização{% else %}Edição{% endif %} Modelo{% endblock %}
+{% block title %}{% if readonly %}Visualização{% else %}Edição{% endif %} Modelo de Vestígio - {{ tipo_descricao }}{% endblock %}
+{% block maintitle %}{% if readonly %}Visualização{% else %}Edição{% endif %} Modelo de Vestígio - {{ tipo_descricao }}{% endblock %}
 
 {% block breadcrumb %}
-  <li class="breadcrumb-item"><a href="/modelo/laudo/listagem">Modelos de Laudo</a></li>
-  <li class="breadcrumb-item"><a href="/modelo/laudo/listagem">Listagem</a></li>
-  <li class="breadcrumb-item active" aria-current="page">{% if readonly %}Visualização{% else %}Edição{% endif %} de Modelo</li>
+  <li class="breadcrumb-item"><a href="/modelo/vestigio/listagem">Modelos de Vestígio</a></li>
+  <li class="breadcrumb-item"><a href="/modelo/vestigio/listagem">Listagem</a></li>
+  <li class="breadcrumb-item active" aria-current="page">{% if readonly %}Visualização{% else %}Edição{% endif %} de Modelo de Vestígio - {{ tipo_descricao }}</li>
 {% endblock %}
 
 {% block content %}
@@ -15,22 +15,22 @@
     {% if not readonly %}
         <button id="salvar-modelo" style="margin-right: 5px;" class="btn btn-primary mb-3"><i class="fas fa-save"></i> Salvar Modelo</button> 
     {% endif %}
-    <a href="/modelo/laudo/listagem"><button class="btn btn-secondary mb-3"><i class="fas fa-backspace"></i> Voltar</button></a>
+    <a href="/modelo/vestigio/listagem"><button class="btn btn-secondary mb-3"><i class="fas fa-backspace"></i> Voltar</button></a>
   </div>
 
   <div class="card p-4">
     <form id="form-modelo" method="POST" action="">
-      {% csrf_token %}
-      {% if messages %}
-        {% for message in messages %}
-          <div class="alert alert-danger" role="alert">{{ message }}</div>
-        {% endfor %}
-      {% endif %}
+        {% csrf_token %}
+        {% if messages %}
+            {% for message in messages %}
+            <div class="alert alert-danger" role="alert">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
 
-      <div class="mb-3">
-        <label for="descricaoModelo" class="form-label">Descrição do Modelo*</label>
-        <input type="text" name="name" class="form-control" id="descricaoModelo" {% if readonly %}disabled{% endif %} maxlength="100" required placeholder="Descrição do texto..." value="{{ modelo.name }}" />
-      </div>
+        <div class="mb-3">
+            <label for="descricaoModelo" class="form-label">Descrição do Modelo*</label>
+            <input type="text" name="name" class="form-control" id="descricaoModelo" {% if readonly %}disabled{% endif %} maxlength="100" required placeholder="Descrição do texto..." value="{{ modelo.name }}" />
+        </div>
 
         <div class="mb-3">
             <label for="visibilidadeModelo" class="form-label">Visibilidade*</label>
@@ -45,8 +45,8 @@
         </div>
 
       <div class="mb-3">
-        <label for="valueModelo" class="form-label">Conteúdo do Modelo*</label>
-        <textarea name="value" id="valueModelo" class="form-control" required>{{ modelo.value }}</textarea>
+            <label for="valueModelo" class="form-label">Conteúdo do Modelo*</label>
+            <textarea name="value" id="valueModelo" class="form-control" required>{{ modelo.value }}</textarea>
       </div>
     </form>
   </div>
@@ -60,45 +60,24 @@
       setup: function (editor) {
         // Configuração personalizada de merge tags
         editor.ui.registry.addMenuButton('merge_tags', {
-          text: 'Tags',
-          fetch: function (callback) {
-            // Tags disponíveis
-            const items = [
-              { type: 'menuitem', text: 'Nome', value: '@{nome}@' },
-              { type: 'menuitem', text: 'Email', value: '@{email}@' },
-              { type: 'menuitem', text: 'Data', value: '@{data}@' },
-              { type: 'menuitem', text: 'Protocolo', value: '@{protocolo}@' },
-              { type: 'menuitem', text: 'Data Entrada', value: '@{dataEntrada}@' },
-              { type: 'menuitem', text: 'Setor ID', value: '@{setorId}@' },
-              { type: 'menuitem', text: 'Setor Descrição', value: '@{setorDescricao}@' },
-              { type: 'menuitem', text: 'Setor Descrição Completa', value: '@{setorDescricaoCompleta}@' },
-              { type: 'menuitem', text: 'Documento ID', value: '@{documentoProcedimentoPericialId}@' },
-              { type: 'menuitem', text: 'Documento Data Inclusão', value: '@{documentoProcedimentoPericialDataInclusao}@' },
-              { type: 'menuitem', text: 'Documento Número', value: '@{documentoProcedimentoPericialNumero}@' },
-              { type: 'menuitem', text: 'Documento Ano', value: '@{documentoProcedimentoPericialAno}@' },
-              { type: 'menuitem', text: 'Documento Tipo ID', value: '@{documentoProcedimentoPericialTipoDocumentoId}@' },
-              { type: 'menuitem', text: 'Documento Tipo Descrição', value: '@{documentoProcedimentoPericialTipoDocumentoDescricao}@' },
-              { type: 'menuitem', text: 'Documento Tipo Abreviatura', value: '@{documentoProcedimentoPericialTipoDocumentoAbreviatura}@' },
-              { type: 'menuitem', text: 'Laudo Data Inclusão', value: '@{laudo.dataInclusao}@' },
-              { type: 'menuitem', text: 'Laudo Número Completo', value: '@{laudo.numeroCompleto}@' },
-              { type: 'menuitem', text: 'Solicitação Ocorrência ID', value: '@{solicitacaoOcorrenciaId}@' },
-              { type: 'menuitem', text: 'Solicitação Setor Acionamento ID', value: '@{solicitacaoOcorrenciaSetorAcionamentoId}@' },
-              { type: 'menuitem', text: 'Solicitação Setor Acionamento Descrição', value: '@{solicitacaoOcorrenciaSetorAcionamentoDescricao}@' },
-              { type: 'menuitem', text: 'Solicitação Município Descrição', value: '@{solicitacaoOcorrenciaMunicipioDescricao}@' },
-              { type: 'menuitem', text: 'Solicitação Bairro', value: '@{solicitacaoOcorrenciaBairro}@' },
-              { type: 'menuitem', text: 'Solicitação Logradouro', value: '@{solicitacaoOcorrenciaSescricaoLogradouro}@' },
-              { type: 'menuitem', text: 'Solicitação Observação', value: '@{solicitacaoOcorrenciaObservacao}@' },
-              { type: 'menuitem', text: 'Solicitação Tipo Acionamento', value: '@{solicitacaoOcorrenciaTipoAcionamento}@' }
-            ]
-            callback(
-              items.map((item) => ({
-                ...item,
-                onAction: () => {
-                  editor.insertContent(`<span style="font-weight: 600; color: #1c5fa7" class="merge-tag" contenteditable="false">${item.value}</span>`)
-                }
-              }))
-            )
-          }
+            text: 'Tags',
+            fetch: function (callback) {
+                const variaveis = JSON.parse('{{ variaveis|safe }}');
+
+                const items = variaveis.map(varObj => ({
+                    type: 'menuitem',
+                    text: varObj.descricao,
+                    value: varObj.variavel
+                }));
+                callback(
+                    items.map((item) => ({
+                    ...item,
+                    onAction: () => {
+                        editor.insertContent(`<span style="font-weight: 600; color: #1c5fa7" class="merge-tag" contenteditable="false">${item.value}</span>`)
+                    }
+                    }))
+                )
+            }
         })
     
         editor.on('init', function () {

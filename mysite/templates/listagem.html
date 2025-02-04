@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
-{% block title %}Listagem de Modelos{% endblock %}
-{% block maintitle %}Listagem de Modelos{% endblock %}
+{% block title %}Listagem de Modelos Laudo{% endblock %}
+{% block maintitle %}Listagem de Modelos Laudo{% endblock %}
 
 {% block breadcrumb %}
   <li class="breadcrumb-item"><a href="#">Modelos de Laudo</a></li>
@@ -29,6 +29,7 @@
           <tr>
             <th>Descricao</th>
             <th>Usuário</th>
+            <th>Tipo</th>
             <th>Inclusão</th>
             <th>Ações</th>
           </tr>
@@ -38,6 +39,13 @@
             <tr>
               <td>{{ modelo.name }}</td>
               <td>{{ modelo.user_inclusion.first_name }} {{ modelo.user_inclusion.last_name }}</td>
+              <td>
+                {% if modelo.type == 1 %}
+                    <span class="badge text-bg-success" style="font-size: 0.9rem;">{{ modelo.get_type_display }}</span>
+                {% else %}
+                    <span class="badge text-bg-danger" style="font-size: 0.9rem;">{{ modelo.get_type_display }}</span>
+                {% endif %}
+              </td>
               <td>{{ modelo.date_inclusion|date:'d/m/Y H:i' }}</td>
               <td class="is-narrow">
                 <div class="text-end">
