@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+
+{% block title %}Login{% endblock %}
+
+{% block breadcrumb %}
+{% endblock %}
+
+{% block content %}
+  <div class="container d-flex justify-content-center align-items-center" style="height: 70vh">
+    <div class="card" style="width: 30rem">
+      <div class="card-body">
+        <form id="buscaGalileu">
+          <div class="mb-3">
+            <div class="mb-3">
+              <label for="galileu" class="form-label">Protocolo Galileu</label>
+              <input type="number" min="1" name="galileu" class="form-control" id="galileu" required placeholder="1234...">
+            </div>
+            <button id="btnBuscaGalileu" type="submit" class="btn btn-primary btn-custom w-100">
+              <span id="btnLabelGalileu">Buscar</span>
+              <div id="btnBuscaGalileuSpin" class="spinner-border text-light d-none" style="width: 1rem; height: 1rem;" role="status">
+                <span class="visually-hidden">Loading...</span>
+              </div>
+            </button>
+          <div>
+        </form>
+
+        <div id="success-dialog" class="alert alert-success mt-2 d-none" role="alert">
+          <h5 class="alert-heading">Processo encontrado com sucesso!</h5>
+          <p class="mb-1">O processo <strong><span id="numProcesso">193</span></strong> consta no sistema Galileu com vestígios:</p>
+          <div id="lista-vestigio">
+            <ul id="tiposEvidenciaLista"></ul>
+          </div>
+          <hr>
+          <p class="mb-0">Selecione um modelo de laudo para geração</p>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <script>
+    $(document).ready(function() {
+      $("#buscaGalileu").submit(function(event) {
+        event.preventDefault(); 
+
+        var botaoSubmit = $("#btnBuscaGalileu");
+        botaoSubmit.prop("disabled", true);
+
+        var btnLabelGalileu = $("#btnLabelGalileu");
+        btnLabelGalileu.html("Buscando");
+
+        var btnBuscaGalileuSpin = $("#btnBuscaGalileuSpin");
+        btnBuscaGalileuSpin.removeClass("d-none");
+
+        var successDialog = $("#success-dialog");
+        successDialog.addClass("d-none");
+
+        var numProcesso = $("#numProcesso");
+        numProcesso.empty();
+
+        var listaVestigio = $("#tiposEvidenciaLista");
+        listaVestigio.empty();
+
+        var galileuValor = $("#galileu").val();
+
+        var url = '/api/galileu/procedimento_pericial/' + galileuValor;
+
+        $.ajax({
+          url: url,
+          type: 'GET',
+          success: function(response) {
+
+            var tiposEvidencia = {};
+
+            response.data.listaVestigio.forEach(function(item) {
+              var tipo = item.tipoEvidencia.replace(/_/g, ' ');
+              tiposEvidencia[tipo] = (tiposEvidencia[tipo] || 0) + 1;
+            });
+
+            for (var tipo in tiposEvidencia) {
+              if (tiposEvidencia.hasOwnProperty(tipo)) {
+                var listaItem = $('<li>').text(tiposEvidencia[tipo] + ' ' + tipo);  // Cria um item de lista
+                $("#tiposEvidenciaLista").append(listaItem);  // Adiciona à lista
+              }
+            }
+
+            successDialog.removeClass("d-none");
+            numProcesso.html(galileuValor);
+          },
+          error: function(xhr, status, error) {
+            alert('Erro ao enviar os dados!');
+          },
+          complete: function() {
+            botaoSubmit.prop("disabled", false);
+            btnLabelGalileu.html("Buscar");
+            btnBuscaGalileuSpin.addClass("d-none");
+          }
+        });
+      });
+    });
+  </script>
+{% endblock %}

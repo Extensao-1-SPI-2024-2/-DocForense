@@ -308,3 +308,7 @@ def deletar_modelo_vestigio(request, modelo_id):
         messages.error(request, f"Erro ao deletar o modelo de vestígio: {str(e)}")
     
     return redirect('/modelo/vestigio/listagem')
+
+@login_required(login_url='/login')
+def gerar_laudo(request):
+    return render(request, 'gerar_laudo.html')
