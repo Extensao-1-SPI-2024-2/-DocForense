@@ -1,0 +1,6 @@
+Django
+pymysql
+python-docx
+requests
+python-decouple
+gunicorn
