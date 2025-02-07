@@ -10,7 +10,7 @@ Essas instruções permitirão que você execute a aplicação no seu computador
 
 # 📋 Pré-requisitos
 
-os sequintes softwares devem estar instalados na sua máquina:
+Os seguintes requisitos devem estar instalados na sua máquina:
 
 * **Python** - *3.13.0* - [Acessar](https://www.python.org/downloads/)
 * **Django** - *5.1.2* - [Acessar](https://docs.djangoproject.com/en/5.1/topics/install/#installing-official-release)
@@ -18,7 +18,7 @@ os sequintes softwares devem estar instalados na sua máquina:
 
 # 📦 Implantação
 
-Primeiramente deve ser instalado o módulo mysql correspondente
+Primeiramente, deve ser instalado o módulo mysql correspondente
 
 ```
 > pip install pymysql
@@ -30,19 +30,19 @@ Para inicar o tratamento de dados básicos do DB, deve ser gerado as migrations 
 > python manage.py migrate mysite
 ```
 
-Após isso, as migrations devem ser executadas (lembrando que o banco de dados deve estar instalado e sendo executado conforme configuraçõs do arquivo settings.py do módulo mysite)
+Após isso, as migrations devem ser executadas (lembrando que o banco de dados deve estar instalado e sendo executado conforme configurações do arquivo settings.py do módulo mysite)
 
 ```
 > python manage.py migrate
 ```
 
-Após isso, as seeds devem ser executadas (Após a execução com sucesso das migrations)
+Após isso, as seeds devem ser executadas (após a execução com sucesso das migrations)
 
 ```
 > python manage.py migrate
 ```
 
-Com isso todas as tabelas devem ser devidamente criadas no banco de dados fornecido ao projeto, logo após a aplicação deve ser executada na porta 8000 com o seguinte comando
+Com isso, todas as tabelas devem ser devidamente criadas no banco de dados fornecido ao projeto. Logo em seguida, a aplicação deve ser executada na porta 8000 com o seguinte comando
 
 ```
 > py manage.py runserver
@@ -60,7 +60,7 @@ Para instalar o módulo responsável por variaveis de ambiente
 > pip install python-decouple
 ```
 
-Para instalar o módulo responsável por gerar arquivo word
+Para instalar o módulo responsável por gerar o arquivo word
 
 ```
 > pip install python-docx
