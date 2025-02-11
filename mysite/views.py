@@ -11,6 +11,9 @@ from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect
 from django.contrib import messages
+from .template_processor import TemplateProcessor
+from .contexto_procedimento_pericial import ContextoProcedimentoPericial
+from datetime import datetime
 
 @login_required(login_url='/login')
 def procedimento_pericial(request, id):
@@ -126,8 +129,11 @@ def create_modelo(request):
             messages.error(request, f"Erro: {str(e)}")
             return redirect('/modelo/laudo/criar')
         
+    variaveis = Variavel.objects.filter(tipo=0).values('variavel', 'descricao')
+    
     return render(request, 'modelo.html', {
         'type_choices': ModeloVestigio.TYPE_CHOICES,
+        'variaveis': json.dumps(list(variaveis)),
     })
 
 @login_required(login_url='/login')
@@ -224,7 +230,9 @@ def editar_modelo(request, modelo_id):
             messages.error(request, f"Erro ao atualizar o modelo: {str(e)}")
             return redirect(f'/modelo/laudo/editar/{modelo_id}')
     
+    variaveis = Variavel.objects.filter(tipo=0).values('variavel', 'descricao')
     return render(request, 'modelo_edicao.html', {
+        'variaveis': json.dumps(list(variaveis)),
         'modelo': modelo, 
         'readonly': False,
         'type_choices': ModeloVestigio.TYPE_CHOICES,
@@ -311,4 +319,38 @@ def deletar_modelo_vestigio(request, modelo_id):
 
 @login_required(login_url='/login')
 def gerar_laudo(request):
-    return render(request, 'gerar_laudo.html')
+    modelos = Modelo.objects.all()
+    return render(request, 'gerar_laudo.html', {'modelos': modelos})
+
+def converter_timestamp_para_data_brasileira(timestamp_ms):
+    if timestamp_ms is None:
+        return None
+    
+    timestamp = timestamp_ms / 1000
+    
+    dt = datetime.fromtimestamp(timestamp)
+    
+    return dt.strftime('%d/%m/%Y %H:%M:%S')
+
+@login_required(login_url='/login')
+def gerar_modelo_formatado(request, galileu_id, modelo_id):
+    if request.method == 'GET':
+        
+        service = GalileuAPIService()
+        response_data = service.get_procedimento_pericial(galileu_id)
+
+        if 'error' in response_data:
+            return JsonResponse({'status': 'error', 'message': response_data['error']}, status=500)
+        
+        contexto = ContextoProcedimentoPericial(response_data).gerar_contexto()
+        
+        modelo = get_object_or_404(Modelo, id=modelo_id)
+        
+        processor = TemplateProcessor(contexto)
+        text = processor.substituir_variaveis(modelo.value)
+        
+        return JsonResponse({'status': 'success', 'data': {
+            "text": text
+        }})
+    
+    return JsonResponse({'error': 'Method not allowed'}, status=405)

@@ -1,102 +1,269 @@
 {% extends "base.html" %}
+{% load static %}
 
-{% block title %}Login{% endblock %}
+{% block title %}Gerar Laudo{% endblock %}
 
 {% block breadcrumb %}
 {% endblock %}
 
 {% block content %}
-  <div class="container d-flex justify-content-center align-items-center" style="height: 70vh">
-    <div class="card" style="width: 30rem">
-      <div class="card-body">
-        <form id="buscaGalileu">
-          <div class="mb-3">
-            <div class="mb-3">
-              <label for="galileu" class="form-label">Protocolo Galileu</label>
-              <input type="number" min="1" name="galileu" class="form-control" id="galileu" required placeholder="1234...">
+    <div>
+        <div id="box" class="container text-center">
+            <div class="row">
+                <div  class="col-12">
+                    <div class="d-flex justify-content-center align-items-center">
+                        <div class="card" style="width: 30rem">
+                            <div class="card-body">
+                                <form id="buscaGalileu">
+                                    <div class="mb-3">
+                                        <div class="mb-3">
+                                            <label for="galileu" class="form-label">Protocolo Galileu</label>
+                                            <input type="number" min="1" name="galileu" class="form-control" id="galileu" required placeholder="1234...">
+                                        </div>
+                                        <button id="btnBuscaGalileu" type="submit" class="btn btn-primary btn-custom w-100">
+                                            <span id="btnLabelGalileu">Buscar</span>
+                                            <div id="btnBuscaGalileuSpin" class="spinner-border text-light d-none" style="width: 1rem; height: 1rem;" role="status">
+                                                <span class="visually-hidden">Loading...</span>
+                                            </div>
+                                        </button>
+                                    </div>
+                                </form>
+                
+                                <div id="success-dialog" style="text-align: left;" class="alert alert-success mt-2 d-none" role="alert">
+                                    <h5 class="alert-heading">Processo encontrado com sucesso!</h5>
+                                    <p class="mb-1">O processo <strong><span id="numProcesso">193</span></strong> consta no sistema Galileu com vestígios:</p>
+                                    <div id="lista-vestigio">
+                                        <ul id="tiposEvidenciaLista"></ul>
+                                    </div>
+                                    <hr>
+                                    <p class="mb-0">Selecione um modelo de laudo para geração</p>
+                                    <select class="form-select" aria-label="Default select example">
+                                    <option selected = "">Selecione um modelo...</option>
+                                        {% for modelo in modelos %}
+                                            <option value="{{ modelo.id }}">{{ modelo.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <button id="btnGerarModelo" class="btn btn-success btn-custom w-100 mt-2">
+                                    <span id="btnLabelGerarModelo">Gerar Laudo</span>
+                                        <div id="btnGerarModeloSpin" class="spinner-border text-light d-none" style="width: 1rem; height: 1rem;" role="status">
+                                            <span class="visually-hidden">Loading...</span>
+                                        </div>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <button id="btnBuscaGalileu" type="submit" class="btn btn-primary btn-custom w-100">
-              <span id="btnLabelGalileu">Buscar</span>
-              <div id="btnBuscaGalileuSpin" class="spinner-border text-light d-none" style="width: 1rem; height: 1rem;" role="status">
-                <span class="visually-hidden">Loading...</span>
-              </div>
-            </button>
-          <div>
-        </form>
-
-        <div id="success-dialog" class="alert alert-success mt-2 d-none" role="alert">
-          <h5 class="alert-heading">Processo encontrado com sucesso!</h5>
-          <p class="mb-1">O processo <strong><span id="numProcesso">193</span></strong> consta no sistema Galileu com vestígios:</p>
-          <div id="lista-vestigio">
-            <ul id="tiposEvidenciaLista"></ul>
-          </div>
-          <hr>
-          <p class="mb-0">Selecione um modelo de laudo para geração</p>
         </div>
-
-      </div>
     </div>
-  </div>
+</div>
+        
+        <div id="editor" class="d-none">
+            <h3 class="mb-3">Laudo de Procolo <span id="protocolo"></span></h3>
+            <div class="d-flex justify-content-end">
+                <button id="gera-laudo-btn" style="margin-right: 5px;" class="btn btn-primary mb-3"><i class="fas fa-file-word"></i> Gerar Docx</button> 
+                <a href="/gerar/laudo/"><button class="btn btn-secondary mb-3"><i class="fas fa-arrow-rotate-right"></i> Gerar Novamente</button></a>
+            </div>
+            <textarea id="laudo" name="value"></textarea>
+        </div>
+    </div>
+    <script src="{% static 'tinymce/js/tinymce/tinymce.min.js' %}"></script>
+    <script>
+        $(document).ready(function() {
+            $("#buscaGalileu").submit(function(event) {
+                event.preventDefault(); 
 
-  <script>
-    $(document).ready(function() {
-      $("#buscaGalileu").submit(function(event) {
-        event.preventDefault(); 
+                var botaoSubmit = $("#btnBuscaGalileu");
+                botaoSubmit.prop("disabled", true);
 
-        var botaoSubmit = $("#btnBuscaGalileu");
-        botaoSubmit.prop("disabled", true);
+                var btnLabelGalileu = $("#btnLabelGalileu");
+                btnLabelGalileu.html("Buscando");
 
-        var btnLabelGalileu = $("#btnLabelGalileu");
-        btnLabelGalileu.html("Buscando");
+                var btnBuscaGalileuSpin = $("#btnBuscaGalileuSpin");
+                btnBuscaGalileuSpin.removeClass("d-none");
 
-        var btnBuscaGalileuSpin = $("#btnBuscaGalileuSpin");
-        btnBuscaGalileuSpin.removeClass("d-none");
+                var successDialog = $("#success-dialog");
+                successDialog.addClass("d-none");
 
-        var successDialog = $("#success-dialog");
-        successDialog.addClass("d-none");
+                var numProcesso = $("#numProcesso");
+                numProcesso.empty();
 
-        var numProcesso = $("#numProcesso");
-        numProcesso.empty();
+                var listaVestigio = $("#tiposEvidenciaLista");
+                listaVestigio.empty();
 
-        var listaVestigio = $("#tiposEvidenciaLista");
-        listaVestigio.empty();
+                var galileuValor = $("#galileu").val();
 
-        var galileuValor = $("#galileu").val();
+                var url = '/api/galileu/procedimento_pericial/' + galileuValor;
 
-        var url = '/api/galileu/procedimento_pericial/' + galileuValor;
+                $.ajax({
+                    url: url,
+                    type: 'GET',
+                    success: function(response) {
 
-        $.ajax({
-          url: url,
-          type: 'GET',
-          success: function(response) {
+                        var tiposEvidencia = {};
 
-            var tiposEvidencia = {};
+                        response.data.listaVestigio.forEach(function(item) {
+                        var tipo = item.tipoEvidencia.replace(/_/g, ' ');
+                        tiposEvidencia[tipo] = (tiposEvidencia[tipo] || 0) + 1;
+                        });
 
-            response.data.listaVestigio.forEach(function(item) {
-              var tipo = item.tipoEvidencia.replace(/_/g, ' ');
-              tiposEvidencia[tipo] = (tiposEvidencia[tipo] || 0) + 1;
+                        for (var tipo in tiposEvidencia) {
+                        if (tiposEvidencia.hasOwnProperty(tipo)) {
+                            var listaItem = $('<li>').text(tiposEvidencia[tipo] + ' ' + tipo);
+                            $("#tiposEvidenciaLista").append(listaItem);
+                        }
+                        }
+
+                        successDialog.removeClass("d-none");
+                        numProcesso.html(galileuValor);
+                    },
+                    error: function(xhr, status, error) {
+                        alert('Erro ao enviar os dados!');
+                    },
+                    complete: function() {
+                        botaoSubmit.prop("disabled", false);
+                        btnLabelGalileu.html("Buscar");
+                        btnBuscaGalileuSpin.addClass("d-none");
+                    }
+                });
             });
 
-            for (var tipo in tiposEvidencia) {
-              if (tiposEvidencia.hasOwnProperty(tipo)) {
-                var listaItem = $('<li>').text(tiposEvidencia[tipo] + ' ' + tipo);  // Cria um item de lista
-                $("#tiposEvidenciaLista").append(listaItem);  // Adiciona à lista
-              }
-            }
+        
+            $("#btnGerarModelo").click(function(event) {
+                var url = '/gerar/modelo/formatado/' + $("#galileu").val() + '/' + 15;
 
-            successDialog.removeClass("d-none");
-            numProcesso.html(galileuValor);
-          },
-          error: function(xhr, status, error) {
-            alert('Erro ao enviar os dados!');
-          },
-          complete: function() {
-            botaoSubmit.prop("disabled", false);
-            btnLabelGalileu.html("Buscar");
-            btnBuscaGalileuSpin.addClass("d-none");
-          }
+                $("#btnBuscaGalileu").prop("disabled", true);
+                $("#btnGerarModelo").prop("disabled", true);
+                $("#btnGerarModeloSpin").removeClass("d-none");
+                $("#btnLabelGerarModelo").html("Gerando");
+                $("#protocolo").html($("#galileu").val());
+
+                $.ajax({
+                    url: url,
+                    type: 'GET',
+                    success: function(response) {
+
+                        $("#laudo").html(response.data.text);
+
+                        tinymce.init({
+                            selector: 'textarea',
+                            promotion: false,
+                            setup: function (editor) {
+                            editor.on('init', function () {
+                                // Adiciona a classe de estilo ao contêiner do editor
+                                const body = editor.getBody()
+                                body.classList.add('tinymce-a4')
+                            })
+                            },
+                            plugins: 'preview importcss searchreplace autolink autosave save directionality code visualblocks visualchars fullscreen image link media codesample table charmap pagebreak nonbreaking anchor insertdatetime advlist lists wordcount help charmap quickbars emoticons accordion',
+                            editimage_cors_hosts: ['picsum.photos'],
+                            menubar: 'file edit view insert format tools table help',
+                            toolbar: 'merge_tags | undo redo | accordion accordionremove | blocks fontfamily fontsize | bold italic underline strikethrough | align numlist bullist | link image | table media | lineheight outdent indent| forecolor backcolor removeformat | charmap emoticons | code fullscreen preview | save print | pagebreak anchor codesample | ltr rtl',
+                            autosave_ask_before_unload: true,
+                            autosave_interval: '30s',
+                            autosave_prefix: '{path}{query}-{id}-',
+                            autosave_restore_when_empty: false,
+                            autosave_retention: '2m',
+                            image_advtab: true,
+                            language: 'pt_BR',
+                            link_list: [
+                            { title: 'My page 1', value: 'https://www.tiny.cloud' },
+                            { title: 'My page 2', value: 'http://www.moxiecode.com' }
+                            ],
+                            image_list: [
+                            { title: 'My page 1', value: 'https://www.tiny.cloud' },
+                            { title: 'My page 2', value: 'http://www.moxiecode.com' }
+                            ],
+                            image_class_list: [
+                            { title: 'None', value: '' },
+                            { title: 'Some class', value: 'class-name' }
+                            ],
+                            importcss_append: true,
+                            file_picker_callback: (callback, value, meta) => {
+                            /* Provide file and text for the link dialog */
+                            if (meta.filetype === 'file') {
+                                callback('https://www.google.com/logos/google.jpg', { text: 'My text' })
+                            }
+                        
+                            /* Provide image and alt text for the image dialog */
+                            if (meta.filetype === 'image') {
+                                callback('https://www.google.com/logos/google.jpg', { alt: 'My alt text' })
+                            }
+                        
+                            /* Provide alternative source and posted for the media dialog */
+                            if (meta.filetype === 'media') {
+                                callback('movie.mp4', { source2: 'alt.ogg', poster: 'https://www.google.com/logos/google.jpg' })
+                            }
+                            },
+                            height: 1000,
+                            image_caption: true,
+                            quickbars_selection_toolbar: 'bold italic | quicklink h2 h3 blockquote quickimage quicktable',
+                            noneditable_class: 'mceNonEditable',
+                            toolbar_mode: 'sliding',
+                            contextmenu: 'link image table',
+                            content_style: `
+                                body {
+                                    background: #fff;
+                                }
+                        
+                                /* Disable the blue "focus" border for the editable region */
+                                .editable-section:focus-visible {
+                                    outline: none !important;
+                                }
+                        
+                                .header,
+                                .footer {
+                                    font-size: 0.8rem;
+                                    color: #ddd;
+                                }
+                        
+                                .header {
+                                    display: flex;
+                                    justify-content: space-between;
+                                    padding: 0 0 1rem 0;
+                                }
+                        
+                                .header .right-text {
+                                    text-align: right;
+                                }
+                        
+                                .footer {
+                                    padding:2rem 0 0 0;
+                                    text-align: center;
+                                }
+                        
+                                /* Apply page-like styling */
+                                @media (min-width: 840px) {
+                                    html {
+                                    background: #eceef4;
+                                    min-height: 100%;
+                                    padding: 0.5rem;
+                                    }
+                        
+                                    body {
+                                    background-color: #fff;
+                                    box-shadow: 0 0 4px rgba(0, 0, 0, .15);
+                                    box-sizing: border-box;
+                                    margin: 1rem auto 0;
+                                    max-width: 820px;
+                                    min-height: calc(100vh - 1rem);
+                                    padding: 2rem 6rem 2rem 6rem;
+                                    }
+                                }
+                            `
+                        });
+                        $("#editor").removeClass("d-none");
+                        $("#box").addClass("d-none");
+                    },
+                    error: function(xhr, status, error) {
+                        alert('Erro ao gerar laudo');
+                    },
+                    complete: function() {
+                        
+                    }
+                });
+            });
         });
-      });
-    });
-  </script>
+    </script>
 {% endblock %}

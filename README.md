@@ -39,7 +39,7 @@ Após isso, as migrations devem ser executadas (lembrando que o banco de dados d
 Após isso, as seeds devem ser executadas (após a execução com sucesso das migrations)
 
 ```
-> python manage.py migrate
+> python manage.py seed
 ```
 
 Com isso, todas as tabelas devem ser devidamente criadas no banco de dados fornecido ao projeto. Logo em seguida, a aplicação deve ser executada na porta 8000 com o seguinte comando

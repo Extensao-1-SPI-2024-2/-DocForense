@@ -57,6 +57,7 @@ class ModeloVestigio(models.Model):
     
 class Variavel(models.Model):
     TIPO_CHOICES = [
+        (0, 'Geral'),
         (1, 'Armamento'),
         (2, 'Arquivo Digital'),
         (3, 'Dispositivo Tecnológico'),

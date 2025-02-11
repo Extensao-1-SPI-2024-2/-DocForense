@@ -38,5 +38,6 @@ urlpatterns = [
     path('modelo/vestigio/editar/<int:modelo_id>/', views.editar_modelo_vestigio, name='editar_modelo_vestigio'),
     path('modelo/vestigio/visualizar/<int:modelo_id>/', views.visualizar_modelo_vestigio, name='visualizar_modelo_vestigio'),
     path('modelo/vestigio/deletar/<int:modelo_id>/', views.deletar_modelo_vestigio, name='deletar_modelo_vestigio'),
-    path('gerar/laudo/', views.gerar_laudo, name='gerar_laudo')
+    path('gerar/laudo/', views.gerar_laudo, name='gerar_laudo'),
+    path('gerar/modelo/formatado/<int:galileu_id>/<int:modelo_id>', views.gerar_modelo_formatado, name='gerar_modelo_formatado')
 ]

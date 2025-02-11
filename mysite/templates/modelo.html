@@ -48,48 +48,26 @@
         selector: 'textarea',
         promotion: false,
         setup: function (editor) {
-          // Configuração personalizada de merge tags
-          editor.ui.registry.addMenuButton('merge_tags', {
-            text: 'Tags',
-            fetch: function (callback) {
-              // Tags disponíveis
-              const items = [
-                { type: 'menuitem', text: 'Nome', value: '@{nome}@' },
-                { type: 'menuitem', text: 'Email', value: '@{email}@' },
-                { type: 'menuitem', text: 'Data', value: '@{data}@' },
-                { type: 'menuitem', text: 'Protocolo', value: '@{protocolo}@' },
-                { type: 'menuitem', text: 'Data Entrada', value: '@{dataEntrada}@' },
-                { type: 'menuitem', text: 'Setor ID', value: '@{setorId}@' },
-                { type: 'menuitem', text: 'Setor Descrição', value: '@{setorDescricao}@' },
-                { type: 'menuitem', text: 'Setor Descrição Completa', value: '@{setorDescricaoCompleta}@' },
-                { type: 'menuitem', text: 'Documento ID', value: '@{documentoProcedimentoPericialId}@' },
-                { type: 'menuitem', text: 'Documento Data Inclusão', value: '@{documentoProcedimentoPericialDataInclusao}@' },
-                { type: 'menuitem', text: 'Documento Número', value: '@{documentoProcedimentoPericialNumero}@' },
-                { type: 'menuitem', text: 'Documento Ano', value: '@{documentoProcedimentoPericialAno}@' },
-                { type: 'menuitem', text: 'Documento Tipo ID', value: '@{documentoProcedimentoPericialTipoDocumentoId}@' },
-                { type: 'menuitem', text: 'Documento Tipo Descrição', value: '@{documentoProcedimentoPericialTipoDocumentoDescricao}@' },
-                { type: 'menuitem', text: 'Documento Tipo Abreviatura', value: '@{documentoProcedimentoPericialTipoDocumentoAbreviatura}@' },
-                { type: 'menuitem', text: 'Laudo Data Inclusão', value: '@{laudo.dataInclusao}@' },
-                { type: 'menuitem', text: 'Laudo Número Completo', value: '@{laudo.numeroCompleto}@' },
-                { type: 'menuitem', text: 'Solicitação Ocorrência ID', value: '@{solicitacaoOcorrenciaId}@' },
-                { type: 'menuitem', text: 'Solicitação Setor Acionamento ID', value: '@{solicitacaoOcorrenciaSetorAcionamentoId}@' },
-                { type: 'menuitem', text: 'Solicitação Setor Acionamento Descrição', value: '@{solicitacaoOcorrenciaSetorAcionamentoDescricao}@' },
-                { type: 'menuitem', text: 'Solicitação Município Descrição', value: '@{solicitacaoOcorrenciaMunicipioDescricao}@' },
-                { type: 'menuitem', text: 'Solicitação Bairro', value: '@{solicitacaoOcorrenciaBairro}@' },
-                { type: 'menuitem', text: 'Solicitação Logradouro', value: '@{solicitacaoOcorrenciaSescricaoLogradouro}@' },
-                { type: 'menuitem', text: 'Solicitação Observação', value: '@{solicitacaoOcorrenciaObservacao}@' },
-                { type: 'menuitem', text: 'Solicitação Tipo Acionamento', value: '@{solicitacaoOcorrenciaTipoAcionamento}@' }
-              ]
-              callback(
-                items.map((item) => ({
-                  ...item,
-                  onAction: () => {
-                    editor.insertContent(`<span style="font-weight: 600; color: #1c5fa7" class="merge-tag" contenteditable="false">${item.value}</span>`)
-                  }
-                }))
-              )
-            }
-          })
+            editor.ui.registry.addMenuButton('merge_tags', {
+                text: 'Tags',
+                fetch: function (callback) {
+                  const variaveis = JSON.parse('{{ variaveis|safe }}')
+          
+                  const items = variaveis.map((varObj) => ({
+                    type: 'menuitem',
+                    text: varObj.descricao,
+                    value: varObj.variavel
+                  }))
+                  callback(
+                    items.map((item) => ({
+                      ...item,
+                      onAction: () => {
+                        editor.insertContent(`<span style="font-weight: 600; color: #1c5fa7" class="merge-tag" contenteditable="false">${item.value}</span>`)
+                      }
+                    }))
+                  )
+                }
+              })
       
           editor.on('init', function () {
             // Adiciona a classe de estilo ao contêiner do editor
