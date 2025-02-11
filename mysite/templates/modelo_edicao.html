@@ -53,6 +53,11 @@
 
   <script src="{% static 'tinymce/js/tinymce/tinymce.min.js' %}"></script>
   <script>
+    let vestigios = JSON.parse('{{ vestigios|safe }}');
+    let typeChoices = JSON.parse('{{ type_vestigio_choices|safe }}');
+
+    let submenus = [];
+
     tinymce.init({
       selector: 'textarea',
       readonly: {% if readonly %}true{% else %}false{% endif %},
@@ -77,7 +82,33 @@
                 }))
               )
             }
-          })
+          });
+
+          Object.keys(vestigios).forEach(type_id => {
+            let submenuItems = vestigios[type_id].map(vestigio => ({
+                type: 'menuitem',
+                text: vestigio.name,
+                value: vestigio.id,
+                onAction: function() {
+                    tinymce.activeEditor.insertContent(`<span style="font-weight: 600; color: #1c5fa7" class="merge-tag merge-tag-vestigio" contenteditable="false">[${typeChoices[vestigio.type_vestigio]} - @{vestigio.${vestigio.id}}@]</span>`);
+                }
+            }));
+    
+            if (typeChoices[type_id]) {
+                submenus.push({
+                    type: 'nestedmenuitem',
+                    text: typeChoices[type_id],
+                    getSubmenuItems: function() { return submenuItems; }
+                });
+            }
+        });
+
+        editor.ui.registry.addMenuButton('merge_vestigios', {
+            text: 'Vestígios',
+            fetch: function(callback) {
+                callback(submenus);
+            }
+        });
     
         editor.on('init', function () {
           // Adiciona a classe de estilo ao contêiner do editor
@@ -88,7 +119,7 @@
       plugins: 'preview importcss searchreplace autolink autosave save directionality code visualblocks visualchars fullscreen image link media codesample table charmap pagebreak nonbreaking anchor insertdatetime advlist lists wordcount help charmap quickbars emoticons accordion',
       editimage_cors_hosts: ['picsum.photos'],
       menubar: 'file edit view insert format tools table help',
-      toolbar: 'merge_tags | undo redo | accordion accordionremove | blocks fontfamily fontsize | bold italic underline strikethrough | align numlist bullist | link image | table media | lineheight outdent indent| forecolor backcolor removeformat | charmap emoticons | code fullscreen preview | save print | pagebreak anchor codesample | ltr rtl',
+      toolbar: 'merge_tags | merge_vestigios | undo redo | accordion accordionremove | blocks fontfamily fontsize | bold italic underline strikethrough | align numlist bullist | link image | table media | lineheight outdent indent| forecolor backcolor removeformat | charmap emoticons | code fullscreen preview | save print | pagebreak anchor codesample | ltr rtl',
       autosave_ask_before_unload: true,
       autosave_interval: '30s',
       autosave_prefix: '{path}{query}-{id}-',

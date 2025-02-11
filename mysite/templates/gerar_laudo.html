@@ -18,7 +18,7 @@
                                     <div class="mb-3">
                                         <div class="mb-3">
                                             <label for="galileu" class="form-label">Protocolo Galileu</label>
-                                            <input type="number" min="1" name="galileu" class="form-control" id="galileu" required placeholder="1234...">
+                                            <input type="number" min="1" name="galileu" class="form-control" id="galileu" required placeholder="1234..." />
                                         </div>
                                         <button id="btnBuscaGalileu" type="submit" class="btn btn-primary btn-custom w-100">
                                             <span id="btnLabelGalileu">Buscar</span>
@@ -37,14 +37,14 @@
                                     </div>
                                     <hr>
                                     <p class="mb-0">Selecione um modelo de laudo para geração</p>
-                                    <select class="form-select" aria-label="Default select example">
-                                    <option selected = "">Selecione um modelo...</option>
+                                    <select id="select-modelo" class="form-select" aria-label="Default select example">
+                                        <option value="" selected>Selecione um modelo...</option>
                                         {% for modelo in modelos %}
                                             <option value="{{ modelo.id }}">{{ modelo.name }}</option>
                                         {% endfor %}
                                     </select>
                                     <button id="btnGerarModelo" class="btn btn-success btn-custom w-100 mt-2">
-                                    <span id="btnLabelGerarModelo">Gerar Laudo</span>
+                                        <span id="btnLabelGerarModelo">Gerar Laudo</span>
                                         <div id="btnGerarModeloSpin" class="spinner-border text-light d-none" style="width: 1rem; height: 1rem;" role="status">
                                             <span class="visually-hidden">Loading...</span>
                                         </div>
@@ -60,16 +60,21 @@
 </div>
         
         <div id="editor" class="d-none">
-            <h3 class="mb-3">Laudo de Procolo <span id="protocolo"></span></h3>
-            <div class="d-flex justify-content-end">
-                <button id="gera-laudo-btn" style="margin-right: 5px;" class="btn btn-primary mb-3"><i class="fas fa-file-word"></i> Gerar Docx</button> 
-                <a href="/gerar/laudo/"><button class="btn btn-secondary mb-3"><i class="fas fa-arrow-rotate-right"></i> Gerar Novamente</button></a>
-            </div>
-            <textarea id="laudo" name="value"></textarea>
+            <form action="/api/word/gerar_arquivo_word_laudo/" method="post">
+                {% csrf_token %}
+                <h3 class="mb-3">Laudo de Procolo <span id="protocolo"></span></h3>
+                <div class="d-flex justify-content-end">
+                    <button id="gera-laudo-btn" style="margin-right: 5px;" class="btn btn-primary mb-3"><i class="fas fa-file-word"></i> Gerar Docx</button> 
+                    <a href="/gerar/laudo/"><button class="btn btn-secondary mb-3" type="button"><i class="fas fa-arrow-rotate-right"></i> Gerar Novamente</button></a>
+                </div>
+                <textarea id="laudo" name="laudo"></textarea>
+            </form>
         </div>
     </div>
     <script src="{% static 'tinymce/js/tinymce/tinymce.min.js' %}"></script>
     <script>
+        var galileuValor = "";
+
         $(document).ready(function() {
             $("#buscaGalileu").submit(function(event) {
                 event.preventDefault(); 
@@ -92,7 +97,7 @@
                 var listaVestigio = $("#tiposEvidenciaLista");
                 listaVestigio.empty();
 
-                var galileuValor = $("#galileu").val();
+                galileuValor = $("#galileu").val();
 
                 var url = '/api/galileu/procedimento_pericial/' + galileuValor;
 
@@ -131,7 +136,12 @@
 
         
             $("#btnGerarModelo").click(function(event) {
-                var url = '/gerar/modelo/formatado/' + $("#galileu").val() + '/' + 15;
+                if($('#select-modelo').val() === ""){
+                    alert("Selecione um Modelo");
+                    return;
+                }
+
+                var url = '/gerar/modelo/formatado/' + galileuValor + '/' + $('#select-modelo').val();
 
                 $("#btnBuscaGalileu").prop("disabled", true);
                 $("#btnGerarModelo").prop("disabled", true);

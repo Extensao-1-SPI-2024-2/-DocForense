@@ -66,6 +66,11 @@ Para instalar o módulo responsável por gerar o arquivo word
 > pip install python-docx
 ```
 
+Para instalar o módulo responsável por tratar variáveis
+```
+> pip install beautifulsoup4
+```
+
 # Guia para o desenvolvedor
 
 Este é o guia destinado aos desenvolvedores que estarão contribuindo com o desenvolvimento deste projeto.

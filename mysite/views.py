@@ -2,7 +2,6 @@ import json
 from django.http import JsonResponse
 from django.contrib.auth import authenticate, login, logout
 from .services import GalileuAPIService
-from .services import WordFileGenerator
 from django.http import HttpResponse
 from django.shortcuts import render, get_object_or_404, redirect
 from django.http import HttpResponse
@@ -14,6 +13,9 @@ from django.contrib import messages
 from .template_processor import TemplateProcessor
 from .contexto_procedimento_pericial import ContextoProcedimentoPericial
 from datetime import datetime
+from django.http import HttpResponse
+from docx import Document
+from bs4 import BeautifulSoup
 
 @login_required(login_url='/login')
 def procedimento_pericial(request, id):
@@ -29,25 +31,39 @@ def procedimento_pericial(request, id):
         return JsonResponse({'error': 'Method not allowed'}, status=405)
     
 @login_required(login_url='/login')
-def gerar_arquivo_word_teste(request):
-    
-    data = {
-        'title': 'Laudo Exemplo',
-        'sections': {
-            'Seção 1': 'Texto da seção 1.',
-            'Seção 2': 'Texto da seção 2.',
-        },
-    }
+def gerar_arquivo_word_laudo(request):
+    if request.method == 'POST':
+        html_content = request.POST.get('laudo', '') 
 
-    file_buffer = WordFileGenerator.generate_word_file_test(data)
+        if not html_content:
+            return HttpResponse("Nenhum HTML foi enviado.", status=400)
 
-    response = HttpResponse(
-        file_buffer,
-        content_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-    )
-    response['Content-Disposition'] = 'attachment; filename="relatorio.docx"'
+        doc = Document()
 
-    return response
+        soup = BeautifulSoup(html_content, 'html.parser')
+
+        for tag in soup.find_all(['p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'ul', 'ol', 'li']):
+            if tag.name.startswith('h'):
+                doc.add_heading(tag.get_text(), level=int(tag.name[1]))
+            elif tag.name == 'p':
+                doc.add_paragraph(tag.get_text())
+            elif tag.name in ['ul', 'ol']:
+                for li in tag.find_all('li'):
+                    doc.add_paragraph(f'• {li.get_text()}', style='List Bullet')
+
+        from io import BytesIO
+        file_buffer = BytesIO()
+        doc.save(file_buffer)
+        file_buffer.seek(0)
+
+        response = HttpResponse(
+            file_buffer,
+            content_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        )
+        response['Content-Disposition'] = 'attachment; filename="laudo.docx"'
+        return response
+
+    return HttpResponse("Método não permitido.", status=405)
 
 
 def logininternal(request):
@@ -130,10 +146,20 @@ def create_modelo(request):
             return redirect('/modelo/laudo/criar')
         
     variaveis = Variavel.objects.filter(tipo=0).values('variavel', 'descricao')
+    vestigios = ModeloVestigio.objects.values('id', 'name', 'type_vestigio')
     
+    vestigios_organizados = {}
+    for vestigio in vestigios:
+        type_vestigio = vestigio['type_vestigio']
+        if type_vestigio not in vestigios_organizados:
+            vestigios_organizados[type_vestigio] = []
+        vestigios_organizados[type_vestigio].append(vestigio)
+
     return render(request, 'modelo.html', {
-        'type_choices': ModeloVestigio.TYPE_CHOICES,
         'variaveis': json.dumps(list(variaveis)),
+        'type_choices': ModeloVestigio.TYPE_CHOICES,
+        'vestigios': json.dumps(vestigios_organizados),
+        'type_vestigio_choices': json.dumps(dict(ModeloVestigio.TYPE_VESTIGIO_CHOICES))
     })
 
 @login_required(login_url='/login')
@@ -231,11 +257,22 @@ def editar_modelo(request, modelo_id):
             return redirect(f'/modelo/laudo/editar/{modelo_id}')
     
     variaveis = Variavel.objects.filter(tipo=0).values('variavel', 'descricao')
+    vestigios = ModeloVestigio.objects.values('id', 'name', 'type_vestigio')
+    
+    vestigios_organizados = {}
+    for vestigio in vestigios:
+        type_vestigio = vestigio['type_vestigio']
+        if type_vestigio not in vestigios_organizados:
+            vestigios_organizados[type_vestigio] = []
+        vestigios_organizados[type_vestigio].append(vestigio)
+        
     return render(request, 'modelo_edicao.html', {
         'variaveis': json.dumps(list(variaveis)),
         'modelo': modelo, 
         'readonly': False,
         'type_choices': ModeloVestigio.TYPE_CHOICES,
+        'vestigios': json.dumps(vestigios_organizados),
+        'type_vestigio_choices': json.dumps(dict(ModeloVestigio.TYPE_VESTIGIO_CHOICES))
     })
 
 @login_required(login_url='/login')
@@ -277,10 +314,21 @@ def editar_modelo_vestigio(request, modelo_id):
 @login_required(login_url='/login')
 def visualizar_modelo(request, modelo_id):
     modelo = get_object_or_404(Modelo, id=modelo_id)
+    vestigios = ModeloVestigio.objects.values('id', 'name', 'type_vestigio')
+    
+    vestigios_organizados = {}
+    for vestigio in vestigios:
+        type_vestigio = vestigio['type_vestigio']
+        if type_vestigio not in vestigios_organizados:
+            vestigios_organizados[type_vestigio] = []
+        vestigios_organizados[type_vestigio].append(vestigio)
+        
     return render(request, 'modelo_edicao.html', {
         'modelo': modelo, 
         'readonly': True,
         'type_choices': ModeloVestigio.TYPE_CHOICES,
+        'vestigios': json.dumps(vestigios_organizados),
+        'type_vestigio_choices': json.dumps(dict(ModeloVestigio.TYPE_VESTIGIO_CHOICES))
     })
     
 @login_required(login_url='/login')
@@ -347,7 +395,8 @@ def gerar_modelo_formatado(request, galileu_id, modelo_id):
         modelo = get_object_or_404(Modelo, id=modelo_id)
         
         processor = TemplateProcessor(contexto)
-        text = processor.substituir_variaveis(modelo.value)
+        text = processor.processar_vestigios(modelo.value, response_data)
+        text = processor.substituir_variaveis(text)
         
         return JsonResponse({'status': 'success', 'data': {
             "text": text
