@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+
+{% block title %}Histórico de Chamados{% endblock %}
+{% block maintitle %}Chamados{% endblock %}
+
+{% block breadcrumb %}
+    {% if user.is_superuser %}
+        <li class="breadcrumb-item active" aria-current="page">Histórico</li>
+    {% else %}
+        <li class="breadcrumb-item active" aria-current="page">Histórico</li>
+        <li class="breadcrumb-item"><a href="/chamados">Chamado</a></li>
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert mt-5 {% if message.tags %} alert-{{ message.tags }}{% else %} alert-info {% endif %}"
+                 role="alert">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+
+    <table class="table">
+        <thead>
+        <tr>
+            <th scope="col">Nº</th>
+            <th scope="col">Assunto</th>
+            <th scope="col">Data</th>
+            <th scope="col">Status</th>
+        </tr>
+        </thead>
+        <tbody>
+            {% for chamado in chamados %}
+                <tr>
+                    <th scope="row">{{ chamado.id }}</th>
+                    <td>{{ chamado.assunto }}</td>
+                    <td>{{ chamado.date_inclusion|date}}</td>
+                    <td>{{ chamado.get_status_display }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}
