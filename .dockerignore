@@ -1,0 +1,11 @@
+db.sqlite3
+.git
+.gitlab
+__pycache__/
+*.pyc
+*.pyo
+.env
+env.example
+package-lock.json
+README.md
+./docs
