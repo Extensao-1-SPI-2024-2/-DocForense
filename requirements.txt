@@ -4,3 +4,4 @@ python-docx
 requests
 python-decouple
 gunicorn
+mysqlclient
