@@ -5,7 +5,7 @@ from .services import GalileuAPIService
 from django.http import HttpResponse
 from django.shortcuts import render, get_object_or_404, redirect
 from django.http import HttpResponse
-from .models import Modelo, ModeloVestigio, Variavel
+from .models import Modelo, ModeloVestigio, Variavel, Chamado, RespostaChamado
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect
@@ -17,6 +17,7 @@ from django.http import HttpResponse
 from docx import Document
 from bs4 import BeautifulSoup
 
+
 @login_required(login_url='/login')
 def procedimento_pericial(request, id):
     if request.method == 'GET':
@@ -25,15 +26,16 @@ def procedimento_pericial(request, id):
 
         if 'error' in response_data:
             return JsonResponse({'status': 'error', 'message': response_data['error']}, status=500)
-        
+
         return JsonResponse({'status': 'success', 'data': response_data})
     else:
         return JsonResponse({'error': 'Method not allowed'}, status=405)
-    
+
+
 @login_required(login_url='/login')
 def gerar_arquivo_word_laudo(request):
     if request.method == 'POST':
-        html_content = request.POST.get('laudo', '') 
+        html_content = request.POST.get('laudo', '')
 
         if not html_content:
             return HttpResponse("Nenhum HTML foi enviado.", status=400)
@@ -70,8 +72,9 @@ def logininternal(request):
     if request.method == 'GET':
         if 'logged_in' in request.session and request.session['logged_in']:
             return redirect('/')
-        
+
     if request.method == 'POST':
+        # Criar o usuário admin, se não existir
         user, created = User.objects.get_or_create(
             username='admindoc1',
             defaults={
@@ -85,6 +88,21 @@ def logininternal(request):
             user.set_password('admindoc1')
             user.save()
 
+        # Criar o usuário comum, se não existir
+        user_comum, criado_comum = User.objects.get_or_create(
+            username='comumuser',
+            defaults={
+                'email': 'comumuser@exemplo.com',
+                'first_name': 'Comum',
+                'last_name': 'User',
+            }
+        )
+
+        if criado_comum:
+            user_comum.set_password('comumuser')
+            user_comum.save()
+
+        # Autenticar o usuário que fez o login
         username = request.POST.get('username')
         password = request.POST.get('password')
 
@@ -100,14 +118,16 @@ def logininternal(request):
 
     return render(request, 'login.html')
 
+
 @login_required(login_url='/login')
 def index(request):
     if request.method == 'GET':
         if not request.session.get('logged_in', False):
             messages.error(request, "É necessário realizar o login.")
             return redirect('/login')
-    
+
     return render(request, 'index.html')
+
 
 @login_required(login_url='/login')
 def logoutinternal(request):
@@ -116,18 +136,19 @@ def logoutinternal(request):
     logout(request)
     return redirect('/login')
 
+
 @login_required(login_url='/login')
 def create_modelo(request):
     if request.method == 'POST':
-        
+
         name = request.POST.get('name')
         value = request.POST.get('value')
-        type =  request.POST.get('type')
+        type = request.POST.get('type')
 
         if not all([name, value, type]):
             messages.error(request, "Todos os campos são obrigatórios.")
             return redirect('/modelo/laudo/criar')
-        
+
         try:
             Modelo.objects.create(
                 name=name,
@@ -144,10 +165,10 @@ def create_modelo(request):
         except Exception as e:
             messages.error(request, f"Erro: {str(e)}")
             return redirect('/modelo/laudo/criar')
-        
+
     variaveis = Variavel.objects.filter(tipo=0).values('variavel', 'descricao')
     vestigios = ModeloVestigio.objects.values('id', 'name', 'type_vestigio')
-    
+
     vestigios_organizados = {}
     for vestigio in vestigios:
         type_vestigio = vestigio['type_vestigio']
@@ -162,6 +183,7 @@ def create_modelo(request):
         'type_vestigio_choices': json.dumps(dict(ModeloVestigio.TYPE_VESTIGIO_CHOICES))
     })
 
+
 @login_required(login_url='/login')
 def create_modelo_vestigio(request, type):
     tipo_descricao = next((desc for value, desc in Variavel.TIPO_CHOICES if value == type), None)
@@ -169,17 +191,17 @@ def create_modelo_vestigio(request, type):
     if not tipo_descricao:
         messages.error(request, "Esse tipo de vestígio não foi encontrado.")
         return redirect('/modelo/vestigio/listagem')
-    
+
     if request.method == 'POST':
-        
+
         name = request.POST.get('name')
         value = request.POST.get('value')
-        type_view =  request.POST.get('type')
+        type_view = request.POST.get('type')
 
         if not all([name, value, type_view]):
             messages.error(request, "Todos os campos são obrigatórios.")
             return redirect('/modelo/vestigio/criar')
-        
+
         try:
             ModeloVestigio.objects.create(
                 name=name,
@@ -197,9 +219,9 @@ def create_modelo_vestigio(request, type):
         except Exception as e:
             messages.error(request, f"Erro: {str(e)}")
             return redirect('/modelo/vestigio/criar')
-    
+
     variaveis = Variavel.objects.filter(tipo=type).values('variavel', 'descricao')
-        
+
     return render(request, 'modelo_vestigio.html', {
         'variaveis': json.dumps(list(variaveis)),
         'tipo': type,
@@ -207,16 +229,18 @@ def create_modelo_vestigio(request, type):
         'type_choices': ModeloVestigio.TYPE_CHOICES
     })
 
+
 @login_required(login_url='/login')
 def listagem(request):
     if request.method == 'GET':
         if not request.session.get('logged_in', False):
             messages.error(request, "É necessário realizar o login.")
             return redirect('/login')
-    
+
     modelos = Modelo.objects.all()
 
     return render(request, 'listagem.html', {'modelos': modelos})
+
 
 @login_required(login_url='/login')
 def listagemVestigio(request):
@@ -224,12 +248,13 @@ def listagemVestigio(request):
         if not request.session.get('logged_in', False):
             messages.error(request, "É necessário realizar o login.")
             return redirect('/login')
-    
+
     modelos = ModeloVestigio.objects.all()
 
     return render(request, 'listagem_vestigio.html', {
         'modelos': modelos
     })
+
 
 @login_required(login_url='/login')
 def editar_modelo(request, modelo_id):
@@ -238,7 +263,7 @@ def editar_modelo(request, modelo_id):
     if request.method == 'POST':
         name = request.POST.get('name')
         value = request.POST.get('value')
-        type_view =  request.POST.get('type')
+        type_view = request.POST.get('type')
 
         if not all([name, value, type_view]):
             messages.error(request, "Todos os campos são obrigatórios.")
@@ -255,25 +280,26 @@ def editar_modelo(request, modelo_id):
         except Exception as e:
             messages.error(request, f"Erro ao atualizar o modelo: {str(e)}")
             return redirect(f'/modelo/laudo/editar/{modelo_id}')
-    
+
     variaveis = Variavel.objects.filter(tipo=0).values('variavel', 'descricao')
     vestigios = ModeloVestigio.objects.values('id', 'name', 'type_vestigio')
-    
+
     vestigios_organizados = {}
     for vestigio in vestigios:
         type_vestigio = vestigio['type_vestigio']
         if type_vestigio not in vestigios_organizados:
             vestigios_organizados[type_vestigio] = []
         vestigios_organizados[type_vestigio].append(vestigio)
-        
+
     return render(request, 'modelo_edicao.html', {
         'variaveis': json.dumps(list(variaveis)),
-        'modelo': modelo, 
+        'modelo': modelo,
         'readonly': False,
         'type_choices': ModeloVestigio.TYPE_CHOICES,
         'vestigios': json.dumps(vestigios_organizados),
         'type_vestigio_choices': json.dumps(dict(ModeloVestigio.TYPE_VESTIGIO_CHOICES))
     })
+
 
 @login_required(login_url='/login')
 def editar_modelo_vestigio(request, modelo_id):
@@ -282,7 +308,7 @@ def editar_modelo_vestigio(request, modelo_id):
     if request.method == 'POST':
         name = request.POST.get('name')
         value = request.POST.get('value')
-        type_view =  request.POST.get('type')
+        type_view = request.POST.get('type')
 
         if not all([name, value, type_view]):
             messages.error(request, "Todos os campos são obrigatórios.")
@@ -299,11 +325,11 @@ def editar_modelo_vestigio(request, modelo_id):
         except Exception as e:
             messages.error(request, f"Erro ao atualizar o modelo de vestígio: {str(e)}")
             return redirect(f'/modelo/vestigio/editar/{modelo_id}')
-        
+
     variaveis = Variavel.objects.filter(tipo=modelo.type_vestigio).values('variavel', 'descricao')
-    
+
     return render(request, 'modelo_vestigio_edicao.html', {
-        'modelo': modelo, 
+        'modelo': modelo,
         'readonly': False,
         'variaveis': json.dumps(list(variaveis)),
         'tipo': modelo.type_vestigio,
@@ -311,95 +337,151 @@ def editar_modelo_vestigio(request, modelo_id):
         'tipo_descricao': modelo.get_type_vestigio_display()
     })
 
+
 @login_required(login_url='/login')
 def visualizar_modelo(request, modelo_id):
     modelo = get_object_or_404(Modelo, id=modelo_id)
     vestigios = ModeloVestigio.objects.values('id', 'name', 'type_vestigio')
-    
+
     vestigios_organizados = {}
     for vestigio in vestigios:
         type_vestigio = vestigio['type_vestigio']
         if type_vestigio not in vestigios_organizados:
             vestigios_organizados[type_vestigio] = []
         vestigios_organizados[type_vestigio].append(vestigio)
-        
+
     return render(request, 'modelo_edicao.html', {
-        'modelo': modelo, 
+        'modelo': modelo,
         'readonly': True,
         'type_choices': ModeloVestigio.TYPE_CHOICES,
         'vestigios': json.dumps(vestigios_organizados),
         'type_vestigio_choices': json.dumps(dict(ModeloVestigio.TYPE_VESTIGIO_CHOICES))
     })
-    
+
+
 @login_required(login_url='/login')
 def visualizar_modelo_vestigio(request, modelo_id):
     modelo = get_object_or_404(ModeloVestigio, id=modelo_id)
     return render(request, 'modelo_vestigio_edicao.html', {
-        'modelo': modelo, 
+        'modelo': modelo,
         'readonly': True,
         'type_choices': ModeloVestigio.TYPE_CHOICES,
         'tipo_descricao': modelo.get_type_vestigio_display()
     })
 
+
 @login_required(login_url='/login')
 def deletar_modelo(request, modelo_id):
     modelo = get_object_or_404(Modelo, id=modelo_id)
-    
+
     try:
         modelo.delete()
         messages.success(request, "Modelo deletado com sucesso!")
     except Exception as e:
         messages.error(request, f"Erro ao deletar o modelo: {str(e)}")
-    
+
     return redirect('/modelo/laudo/listagem')
+
 
 @login_required(login_url='/login')
 def deletar_modelo_vestigio(request, modelo_id):
     modelo = get_object_or_404(ModeloVestigio, id=modelo_id)
-    
+
     try:
         modelo.delete()
         messages.success(request, "Modelo de Vestígio deletado com sucesso!")
     except Exception as e:
         messages.error(request, f"Erro ao deletar o modelo de vestígio: {str(e)}")
-    
+
     return redirect('/modelo/vestigio/listagem')
+
 
 @login_required(login_url='/login')
 def gerar_laudo(request):
     modelos = Modelo.objects.all()
     return render(request, 'gerar_laudo.html', {'modelos': modelos})
 
+
 def converter_timestamp_para_data_brasileira(timestamp_ms):
     if timestamp_ms is None:
         return None
-    
+
     timestamp = timestamp_ms / 1000
-    
+
     dt = datetime.fromtimestamp(timestamp)
-    
+
     return dt.strftime('%d/%m/%Y %H:%M:%S')
+
 
 @login_required(login_url='/login')
 def gerar_modelo_formatado(request, galileu_id, modelo_id):
     if request.method == 'GET':
-        
+
         service = GalileuAPIService()
         response_data = service.get_procedimento_pericial(galileu_id)
 
         if 'error' in response_data:
             return JsonResponse({'status': 'error', 'message': response_data['error']}, status=500)
-        
+
         contexto = ContextoProcedimentoPericial(response_data).gerar_contexto()
-        
+
         modelo = get_object_or_404(Modelo, id=modelo_id)
-        
+
         processor = TemplateProcessor(contexto)
         text = processor.processar_vestigios(modelo.value, response_data)
         text = processor.substituir_variaveis(text)
-        
+
         return JsonResponse({'status': 'success', 'data': {
             "text": text
         }})
-    
+
     return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+
+@login_required(login_url='/login')
+def chamado(request):
+    if request.user.is_superuser:
+        return render(request, 'historico_chamados.html')
+    else:
+        return render(request, 'chamados.html')
+
+
+@login_required(login_url='/login')
+def historico_chamados(request):
+    if request.user.is_superuser:
+        chamados = Chamado.objects.all()
+        print(f"Superusuário - Chamados: {chamados.count()}")
+    else:
+        chamados = Chamado.objects.filter(user_inclusion=request.user)
+        print(f"Usuário comum - Chamados: {chamados.count()}")
+    return render(request, 'historico_chamados.html', {'chamados': chamados})
+
+
+@login_required(login_url='/login')
+def gerar_chamado(request):
+    if request.method == 'POST':
+        assunto = request.POST.get('assunto')
+        descricao = request.POST.get('descricao')
+
+        if not assunto or not descricao:
+            messages.error(request, "Todos os campos são obrigatórios.")
+            return redirect('chamados')
+
+        try:
+            # Cria o chamado com as informações fornecidas
+            chamado = Chamado.objects.create(
+                assunto=assunto,
+                descricao=descricao,
+                responsavel=2,  # Sempre Admin
+                status=1,       # Sempre "Aberto"
+                urgencia=2,     # Padrão "Média"
+                user_inclusion=request.user
+            )
+            messages.success(request, "Chamado criado com sucesso!")
+            return redirect('historico_chamados')
+        except Exception as e:
+            messages.error(request, f"Erro ao criar o chamado: {str(e)}")
+            return redirect('chamados')
+
+    # Se for GET, apenas exibe o formulário
+    return render(request, 'chamados.html')
