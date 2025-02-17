@@ -45,18 +45,20 @@
               </td>
               <td>
                 {% if chamado.status == 1 %}
-                    <span class="badge text-bg-primary" style="font-size: 0.9rem;">{{ chamado.get_status_display }}</span>
+                  <span class="badge text-bg-primary text-white" style="font-size: 0.9rem;">{{ chamado.get_status_display }}</span>
+                {% elif chamado.status == 2 %}
+                  <span class="badge text-bg-warning text-white" style="font-size: 0.9rem;">{{ chamado.get_status_display }}</span>
                 {% else %}
-                    <span class="badge text-bg-secondary" style="font-size: 0.9rem;">{{ chamado.get_status_display }}</span>
+                  <span class="badge text-bg-secondary text-white" style="font-size: 0.9rem;">{{ chamado.get_status_display }}</span>
                 {% endif %}
               </td>
               <td>
                 {% if chamado.urgencia == 1 %}
-                    <span class="badge text-bg-info text-white" style="font-size: 0.9rem;">{{ chamado.get_urgencia_display }}</span>
+                    <span class="badge text-bg-primary text-white" style="font-size: 0.9rem;">{{ chamado.get_urgencia_display }}</span>
                 {% elif chamado.urgencia == 2 %}
                     <span class="badge text-bg-warning text-white" style="font-size: 0.9rem;">{{ chamado.get_urgencia_display }}</span>
                 {% else %}
-                    <span class="badge text-bg-danger" style="font-size: 0.9rem;">{{ chamado.get_urgencia_display }}</span>
+                    <span class="badge text-bg-danger text-white" style="font-size: 0.9rem;">{{ chamado.get_urgencia_display }}</span>
                 {% endif %}
               </td>
               <td>{{ chamado.user_inclusion.first_name }} {{ chamado.user_inclusion.last_name }}</td>

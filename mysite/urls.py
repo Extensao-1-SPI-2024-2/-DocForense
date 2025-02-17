@@ -44,4 +44,5 @@ urlpatterns = [
     path('chamado/criar/',views.gerar_chamado,name='criar_chamado'),
     path('chamado/<int:chamado_id>/', views.analisar_chamado, name='analisar_chamado'),
     path('chamado/responder/<int:chamado_id>/', views.responder_chamado, name='responder_chamado'),
+    path('chamado/fechar/<int:chamado_id>/', views.fechar_chamado, name='fechar_chamado'),
 ]

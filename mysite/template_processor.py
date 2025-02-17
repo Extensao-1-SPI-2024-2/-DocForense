@@ -3,6 +3,7 @@ import re
 from mysite.models import Variavel
 from .models import ModeloVestigio, Variavel
 from django.shortcuts import get_object_or_404
+from .contexto_procedimento_pericial import ContextoProcedimentoPericialMateria, ContextoProcedimentoPericialArmamento, ContextoProcedimentoPericialObjeto, ContextoProcedimentoPericialDispositivo, ContextoProcedimentoPericialDocumento, ContextoProcedimentoPericialVeiculo, ContextoProcedimentoPericialArquivo
 
 class TemplateProcessor:
     def __init__(self, contexto):
@@ -41,7 +42,7 @@ class TemplateProcessor:
                 novo_conteudo = ""
                 
                 if modelo_vestigio.type_vestigio == 1:
-                    dadosVestigios = [vestigio for vestigio in vestigios if vestigio["tipoEvidencia"] == "ARMAMENTO"]
+                    dadosVestigios = [vestigio for vestigio in vestigios if vestigio["tipoEvidencia"] == "MATERIAL_BALISTICO"]
                     novo_conteudo = TemplateProcessor.vestigio_armamento(modelo_vestigio.value, dadosVestigios)
                     
                 if modelo_vestigio.type_vestigio == 2:
@@ -49,11 +50,11 @@ class TemplateProcessor:
                     novo_conteudo = TemplateProcessor.vestigio_arquivo(modelo_vestigio.value, dadosVestigios)
                     
                 if modelo_vestigio.type_vestigio == 3:
-                    dadosVestigios = [vestigio for vestigio in vestigios if vestigio["tipoEvidencia"] == "DISPOSITIVO_TECNOLOGICO"] #conferido
+                    dadosVestigios = [vestigio for vestigio in vestigios if vestigio["tipoEvidencia"] == "DISPOSITIVO_TECNOLOGICO"] 
                     novo_conteudo = TemplateProcessor.vestigio_dispositivo(modelo_vestigio.value, dadosVestigios)
                     
                 if modelo_vestigio.type_vestigio == 4:
-                    dadosVestigios = [vestigio for vestigio in vestigios if vestigio["tipoEvidencia"] == "DOCUMENTO"] #conferido
+                    dadosVestigios = [vestigio for vestigio in vestigios if vestigio["tipoEvidencia"] == "DOCUMENTO"]
                     novo_conteudo = TemplateProcessor.vestigio_documento(modelo_vestigio.value, dadosVestigios)
                     
                 if modelo_vestigio.type_vestigio == 5:
@@ -61,15 +62,15 @@ class TemplateProcessor:
                     novo_conteudo = TemplateProcessor.vestigio_impressao(modelo_vestigio.value, dadosVestigios)
                     
                 if modelo_vestigio.type_vestigio == 6:
-                    dadosVestigios = [vestigio for vestigio in vestigios if vestigio["tipoEvidencia"].startswith("MATERIAL")] #conferido
+                    dadosVestigios = [vestigio for vestigio in vestigios if vestigio["tipoEvidencia"].startswith("MATERIAL_QUIMICO_BIOLOGICO")]
                     novo_conteudo = TemplateProcessor.vestigio_material(modelo_vestigio.value, dadosVestigios)
                     
                 if modelo_vestigio.type_vestigio == 7:
-                    dadosVestigios = [vestigio for vestigio in vestigios if vestigio["tipoEvidencia"] == "OBJETO"] #conferido
+                    dadosVestigios = [vestigio for vestigio in vestigios if vestigio["tipoEvidencia"] == "OBJETO"]
                     novo_conteudo = TemplateProcessor.vestigio_objeto(modelo_vestigio.value, dadosVestigios)
                     
                 if modelo_vestigio.type_vestigio == 8:
-                    dadosVestigios = [vestigio for vestigio in vestigios if vestigio["tipoEvidencia"] == "VEICULO"] #conferido
+                    dadosVestigios = [vestigio for vestigio in vestigios if vestigio["tipoEvidencia"] == "VEICULO"]
                     novo_conteudo = TemplateProcessor.vestigio_veiculo(modelo_vestigio.value, dadosVestigios)
                     
 
@@ -81,7 +82,8 @@ class TemplateProcessor:
         result = ""
     
         for vestigio in dadosVestigios:
-            result += text
+            contexto = ContextoProcedimentoPericialArmamento(vestigio).gerar_contexto()
+            result += TemplateProcessor(contexto).substituir_variaveis(text)
     
         return result.strip()
 
@@ -89,7 +91,8 @@ class TemplateProcessor:
         result = ""
     
         for vestigio in dadosVestigios:
-            result += text
+            contexto = ContextoProcedimentoPericialArquivo(vestigio).gerar_contexto()
+            result += TemplateProcessor(contexto).substituir_variaveis(text)
     
         return result.strip()
     
@@ -97,7 +100,8 @@ class TemplateProcessor:
         result = ""
     
         for vestigio in dadosVestigios:
-            result += text
+            contexto = ContextoProcedimentoPericialDispositivo(vestigio).gerar_contexto()
+            result += TemplateProcessor(contexto).substituir_variaveis(text)
     
         return result.strip()
     
@@ -105,7 +109,8 @@ class TemplateProcessor:
         result = ""
     
         for vestigio in dadosVestigios:
-            result += text
+            contexto = ContextoProcedimentoPericialDocumento(vestigio).gerar_contexto()
+            result += TemplateProcessor(contexto).substituir_variaveis(text)
     
         return result.strip()
     
@@ -121,7 +126,8 @@ class TemplateProcessor:
         result = ""
     
         for vestigio in dadosVestigios:
-            result += text
+            contexto = ContextoProcedimentoPericialMateria(vestigio).gerar_contexto()
+            result += TemplateProcessor(contexto).substituir_variaveis(text)
     
         return result
     
@@ -129,7 +135,8 @@ class TemplateProcessor:
         result = ""
     
         for vestigio in dadosVestigios:
-            result += text
+            contexto = ContextoProcedimentoPericialObjeto(vestigio).gerar_contexto()
+            result += TemplateProcessor(contexto).substituir_variaveis(text)
     
         return result.strip()
     
@@ -137,6 +144,7 @@ class TemplateProcessor:
         result = ""
 
         for vestigio in dadosVestigios:
-            result += text
+            contexto = ContextoProcedimentoPericialVeiculo(vestigio).gerar_contexto()
+            result += TemplateProcessor(contexto).substituir_variaveis(text)
     
         return result.strip()

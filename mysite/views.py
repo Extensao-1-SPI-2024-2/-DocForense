@@ -523,7 +523,7 @@ def responder_chamado(request, chamado_id):
 
             if not all([resposta]):
                 messages.error(request, "Todos os campos são obrigatórios.")
-                return redirect(f'/chamado/' + chamado_id)
+                return redirect(f'/chamado/{chamado_id}')
         
             RespostaChamado.objects.create(
                 chamado=chamado,
@@ -539,7 +539,46 @@ def responder_chamado(request, chamado_id):
             return redirect('/chamado/listagem')
         except Exception as e:
             messages.error(request, f"Erro ao responder o chamado: {str(e)}")
-            return redirect('/chamado/' + chamado_id)
+            return redirect(f'/chamado/{chamado_id}')
+    else:
+        messages.error(request, "Requisição não autorizada.")
+        return redirect('/chamado/listagem')
+
+@login_required(login_url='/login')
+def fechar_chamado(request, chamado_id):
+    chamado = get_object_or_404(Chamado, id=chamado_id)
+
+    if not request.user.is_superuser:
+        messages.error(request, "Este chamado somente pode ser fechado por administradores.")
+        return redirect('/chamado/listagem')
+    
+    if chamado.status == 3:
+        messages.error(request, "Este chamado se encontra encerrado, por favor cadastre um novo.")
+        return redirect('/chamado/listagem')
+    
+    if request.method == 'POST':
+        try:
+            justificativa = request.POST.get('justificativa')
+
+            if not all([justificativa]):
+                messages.error(request, "Todos os campos são obrigatórios.")
+                return redirect(f'/chamado/{chamado_id}')
+        
+            RespostaChamado.objects.create(
+                chamado=chamado,
+                mensagem=justificativa,
+                autor=request.user
+            )
+
+            chamado.responsavel = 2
+            chamado.status = 3
+            chamado.save()
+            
+            messages.success(request, "Chamado respondido com sucesso.")
+            return redirect('/chamado/listagem')
+        except Exception as e:
+            messages.error(request, f"Erro ao responder o chamado: {str(e)}")
+            return redirect(f'/chamado/{chamado_id}')
     else:
         messages.error(request, "Requisição não autorizada.")
         return redirect('/chamado/listagem')

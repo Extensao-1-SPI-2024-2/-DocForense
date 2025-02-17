@@ -13,7 +13,7 @@
   <div class="modal fade" id="ConfirmCloseModal" tabindex="-1" aria-labelledby="ConfirmCloseModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
-            <form>
+            <form method="post" action="/chamado/fechar/{{chamado.id}}/">
                 {% csrf_token %}
                 <div class="modal-header bg-danger text-white">
                     <h5 class="modal-title" id="ConfirmCloseModalLabel"><strong>Você está prestes a encerrar este chamado. </strong></h5>
@@ -21,13 +21,13 @@
                 </div>
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label for="resposta" class="form-label">Justificativa*</label>
-                        <textarea class="form-control" id="resposta" name="resposta" rows="3" required></textarea>
+                        <label for="justificativa" class="form-label">Justificativa*</label>
+                        <textarea class="form-control" id="justificativa" name="justificativa" rows="3" required></textarea>
                     </div>
                 </div>
                 <div class="modal-footer">
                     <button class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <a id="confirmCloseBtn" href="#" class="btn btn-danger">Confirmar Encerramento</a>
+                    <button type="submit" class="btn btn-danger"><i class="fas fa-save"></i> Confirmar Encerramento</button>
                 </div>
             </form>
         </div>
@@ -57,12 +57,6 @@
         </div>
     </div>
   </div>
-    {% if messages %}
-        {% for message in messages %}
-            <div class="alert mt-5 {% if message.tags %} alert-{{ message.tags }}{% else %} alert-info {% endif %}"
-                 role="alert">{{ message }}</div>
-        {% endfor %}
-    {% endif %}
     <form method="post" action="/chamado/criar">
         <div class="d-flex justify-content-end">
             {% if chamado.status != 3 %}
