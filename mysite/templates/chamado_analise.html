@@ -1,0 +1,123 @@
+{% extends 'base.html' %}
+
+{% block title %}Chamados{% endblock %}
+{% block maintitle %}Chamado{% endblock %}
+
+{% block breadcrumb %}
+    <li class="breadcrumb-item"><a href="/chamado/listagem">Chamados</a></li>
+    <li class="breadcrumb-item"><a href="/chamado/listagem">Listagem</a></li>
+    <li class="breadcrumb-item active" aria-current="page">Analisar Chamado</li>
+{% endblock %}
+{% block content %}
+  <!-- Modal de Encerramento -->
+  <div class="modal fade" id="ConfirmCloseModal" tabindex="-1" aria-labelledby="ConfirmCloseModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form>
+                {% csrf_token %}
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title" id="ConfirmCloseModalLabel"><strong>Você está prestes a encerrar este chamado. </strong></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="resposta" class="form-label">Justificativa*</label>
+                        <textarea class="form-control" id="resposta" name="resposta" rows="3" required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <a id="confirmCloseBtn" href="#" class="btn btn-danger">Confirmar Encerramento</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+  <!-- Modal de Resposta -->
+  <div class="modal fade" id="RespostaModal" tabindex="-1" aria-labelledby="RespostaModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form method="post" action="/chamado/responder/{{chamado.id}}/">
+                {% csrf_token %}
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="RespostaModalLabel"><strong>Atribuir informação de resposta no chamado. </strong></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="resposta" class="form-label">Resposta*</label>
+                        <textarea class="form-control" id="resposta" name="resposta" rows="3" required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+  </div>
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert mt-5 {% if message.tags %} alert-{{ message.tags }}{% else %} alert-info {% endif %}"
+                 role="alert">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+    <form method="post" action="/chamado/criar">
+        <div class="d-flex justify-content-end">
+            {% if chamado.status != 3 %}
+                {% if chamado.responsavel == 2 and is_super_user or chamado.responsavel == 1 and request.user == chamado.user_inclusion %}
+                    <button data-bs-toggle="modal" data-bs-target="#RespostaModal" type="button" class="btn btn-primary mb-3 me-2"><i class="fas fa-reply"></i> Responder Chamado</button>
+                {% endif %}
+                {% if is_super_user %}
+                    <button data-bs-toggle="modal" data-bs-target="#ConfirmCloseModal" type="button" class="btn btn-danger mb-3 me-2"><i class="fas fa-lock"></i> Fechar Chamado</button>
+                {% endif %}
+            {% endif %}
+            <a href="/chamado/listagem"><button type="button" class="btn btn-secondary mb-3"><i class="fas fa-backspace"></i> Voltar</button></a>
+        </div>
+        {% csrf_token %}
+        <div class="mb-3">
+            <label for="assunto" class="form-label">Assunto*</label>
+            <input type="text" class="form-control" id="assunto"
+                   name="assunto" disabled value="{{chamado.assunto}}" placeholder="Assunto do chamado" maxlength="200" required>
+        </div>
+        <div class="mb-3">
+            <label for="urgencia" class="form-label">Urgencia*</label>
+            <select disabled name="urgencia" id="urgencia" required class="form-select">
+                <option value="">Selecione uma opção...</option>
+                {% for value, label in urgencia_choices %}
+                    <option {% if chamado and chamado.urgencia == value %}selected{% endif %} value="{{ value }}">
+                        {{ label }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <label for="descricao" class="form-label">Descrição*</label>
+            <textarea disabled class="form-control" id="descricao"name="descricao" rows="3" required>{{ chamado.descricao }}</textarea>
+        </div>
+    </form>
+    <h3 class="mb-3 mt-3">Histórico</h3>
+
+    {% if historico %}
+        <div class="accordion" id="accordionHistorico">
+            {% for resposta in historico %}
+                <div class="accordion-item">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button {% if not forloop.first %}collapsed{% endif %}" type="button" data-bs-toggle="collapse" data-bs-target="#collapse{{resposta.id}}" aria-expanded="true" aria-controls="collapse{{resposta.id}}">
+                            Informação atribuída por {{ resposta.autor.first_name }} {{ resposta.autor.last_name }} às {{ resposta.date_inclusion|date:"H:i" }} de {{ resposta.date_inclusion|date:"d/m/Y" }}
+                        </button>
+                    </h2>
+                    <div id="collapse{{resposta.id}}" class="accordion-collapse collapse {% if forloop.first %}show{% endif %}" data-bs-parent="#accordionHistorico">
+                        <div class="accordion-body">
+                            <strong>Resposta:</strong> {{ resposta.mensagem }}
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p>Nenhuma resposta atribuída ao chamado</p>
+    {% endif %}
+{% endblock %}

@@ -439,49 +439,107 @@ def gerar_modelo_formatado(request, galileu_id, modelo_id):
 
 
 @login_required(login_url='/login')
-def chamado(request):
-    if request.user.is_superuser:
-        return render(request, 'historico_chamados.html')
-    else:
-        return render(request, 'chamados.html')
-
-
-@login_required(login_url='/login')
-def historico_chamados(request):
+def listagem_chamado(request):
     if request.user.is_superuser:
         chamados = Chamado.objects.all()
-        print(f"Superusuário - Chamados: {chamados.count()}")
     else:
         chamados = Chamado.objects.filter(user_inclusion=request.user)
-        print(f"Usuário comum - Chamados: {chamados.count()}")
-    return render(request, 'historico_chamados.html', {'chamados': chamados})
-
+    
+    return render(request, 'listagem_chamado.html', {
+        'is_super_user': request.user.is_superuser,
+        'chamados': chamados
+    })
 
 @login_required(login_url='/login')
 def gerar_chamado(request):
+    if request.user.is_superuser:
+        messages.error(request, "Usuário administrador não autorizado a gerar chamados.")
+        return redirect('/chamado/listagem')
+    
     if request.method == 'POST':
         assunto = request.POST.get('assunto')
+        urgencia = request.POST.get('urgencia')
         descricao = request.POST.get('descricao')
 
-        if not assunto or not descricao:
+        if not all([assunto, urgencia, descricao]):
             messages.error(request, "Todos os campos são obrigatórios.")
-            return redirect('chamados')
+            return redirect(f'/chamado/criar')
 
         try:
-            # Cria o chamado com as informações fornecidas
-            chamado = Chamado.objects.create(
+            Chamado.objects.create(
                 assunto=assunto,
                 descricao=descricao,
-                responsavel=2,  # Sempre Admin
-                status=1,       # Sempre "Aberto"
-                urgencia=2,     # Padrão "Média"
+                responsavel=2,
+                status=1,
+                urgencia=urgencia,
                 user_inclusion=request.user
             )
             messages.success(request, "Chamado criado com sucesso!")
-            return redirect('historico_chamados')
+            return redirect('/chamado/listagem')
         except Exception as e:
             messages.error(request, f"Erro ao criar o chamado: {str(e)}")
-            return redirect('chamados')
+            return redirect('/chamado/criar')
 
-    # Se for GET, apenas exibe o formulário
-    return render(request, 'chamados.html')
+    return render(request, 'chamado.html', {
+        'urgencia_choices': Chamado.URGENCIA_CHOICES
+    })
+
+@login_required(login_url='/login')
+def analisar_chamado(request, chamado_id):
+    chamado = get_object_or_404(Chamado, id=chamado_id)
+
+    if not request.user.is_superuser and request.user != chamado.user_inclusion:
+        messages.error(request, "Acesso não autorizado.")
+        return redirect('/chamado/listagem')
+    
+    historico = RespostaChamado.objects.filter(chamado=chamado).order_by('-date_inclusion')
+
+    return render(request, 'chamado_analise.html', {
+        'is_super_user': request.user.is_superuser,
+        'chamado': chamado,
+        'urgencia_choices': Chamado.URGENCIA_CHOICES,
+        'historico': historico
+    })
+
+@login_required(login_url='/login')
+def responder_chamado(request, chamado_id):
+    chamado = get_object_or_404(Chamado, id=chamado_id)
+
+    if chamado.responsavel == 2 and not request.user.is_superuser:
+        messages.error(request, "Este chamado somente pode ser respondido por administradores.")
+        return redirect('/chamado/listagem')
+    
+    if chamado.responsavel == 1 and request.user != chamado.user_inclusion:
+        messages.error(request, "Este chamado somente pode ser respondido pelo solicitante.")
+        return redirect('/chamado/listagem')
+    
+    if chamado.status == 3:
+        messages.error(request, "Este chamado se encontra encerrado, por favor cadastre um novo.")
+        return redirect('/chamado/listagem')
+    
+    if request.method == 'POST':
+        try:
+            resposta = request.POST.get('resposta')
+
+            if not all([resposta]):
+                messages.error(request, "Todos os campos são obrigatórios.")
+                return redirect(f'/chamado/' + chamado_id)
+        
+            RespostaChamado.objects.create(
+                chamado=chamado,
+                mensagem=resposta,
+                autor=request.user
+            )
+
+            chamado.responsavel = 1 if chamado.responsavel == 2 else 2
+            chamado.status = 2
+            chamado.save()
+            
+            messages.success(request, "Chamado respondido com sucesso.")
+            return redirect('/chamado/listagem')
+        except Exception as e:
+            messages.error(request, f"Erro ao responder o chamado: {str(e)}")
+            return redirect('/chamado/' + chamado_id)
+    else:
+        messages.error(request, "Requisição não autorizada.")
+        return redirect('/chamado/listagem')

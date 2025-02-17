@@ -21,11 +21,6 @@
   <div class="card p-4">
     <form id="form-modelo" method="POST" action="">
       {% csrf_token %}
-      {% if messages %}
-        {% for message in messages %}
-          <div class="alert alert-danger" role="alert">{{ message }}</div>
-        {% endfor %}
-      {% endif %}
 
       <div class="mb-3">
         <label for="descricaoModelo" class="form-label">Descrição do Modelo*</label>

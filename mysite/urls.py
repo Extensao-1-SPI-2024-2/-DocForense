@@ -40,8 +40,8 @@ urlpatterns = [
     path('modelo/vestigio/deletar/<int:modelo_id>/', views.deletar_modelo_vestigio, name='deletar_modelo_vestigio'),
     path('gerar/laudo/', views.gerar_laudo, name='gerar_laudo'),
     path('gerar/modelo/formatado/<int:galileu_id>/<int:modelo_id>', views.gerar_modelo_formatado, name='gerar_modelo_formatado'),
-    path('chamados', views.chamado, name='chamados'),
-    path('chamados/historico_chamados',views.historico_chamados,name='historico_chamados'),
-    path('chamados/gerar_chamado',views.gerar_chamado,name='gerar_chamado')
-
+    path('chamado/listagem', views.listagem_chamado, name='chamados'),
+    path('chamado/criar/',views.gerar_chamado,name='criar_chamado'),
+    path('chamado/<int:chamado_id>/', views.analisar_chamado, name='analisar_chamado'),
+    path('chamado/responder/<int:chamado_id>/', views.responder_chamado, name='responder_chamado'),
 ]

@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+
+{% block title %}Chamados{% endblock %}
+{% block maintitle %}Chamado{% endblock %}
+
+{% block breadcrumb %}
+    <li class="breadcrumb-item"><a href="/chamado/listagem">Chamados</a></li>
+    <li class="breadcrumb-item"><a href="/chamado/listagem">Listagem</a></li>
+    <li class="breadcrumb-item active" aria-current="page">Criar Chamado</li>
+{% endblock %}
+{% block content %}
+    <form method="post" action="/chamado/criar/">
+        {% csrf_token %}
+        <div class="d-flex justify-content-end">
+            <button id="salvar-chamado" style="margin-right: 5px;" class="btn btn-primary mb-3"><i class="fas fa-save"></i> Enviar Chamado</button> 
+            <a href="/chamado/listagem"><button type="button" class="btn btn-secondary mb-3"><i class="fas fa-backspace"></i> Voltar</button></a>
+        </div>
+        <div class="mb-3">
+            <label for="assunto" class="form-label">Assunto*</label>
+            <input type="text" class="form-control" id="assunto"
+                   name="assunto" placeholder="Assunto do chamado" maxlength="200" required>
+        </div>
+        <div class="mb-3">
+            <label for="urgencia" class="form-label">Urgencia*</label>
+            <select name="urgencia" id="urgencia" required class="form-select">
+                <option value="">Selecione uma opção...</option>
+                {% for value, label in urgencia_choices %}
+                    <option value="{{ value }}">
+                        {{ label }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="mb-3">
+            <label for="descricao" class="form-label">Descrição*</label>
+            <textarea class="form-control" id="descricao"
+                      name="descricao" rows="3" required></textarea>
+        </div>
+    </form>
+{% endblock %}

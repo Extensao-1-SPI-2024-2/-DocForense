@@ -9,12 +9,6 @@
 {% endblock %}
 
 {% block content %}
-{% if messages %}
-{% for message in messages %}
-  <div class="alert mt-5 {% if message.tags %} alert-{{ message.tags }}{% else %} alert-info {% endif %}"
-    role="alert">{{ message }}</div>
-{% endfor %}
-{% endif %}
 <!-- Modal de Confirmação -->
 <div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-labelledby="confirmDeleteModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">

@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="title" content="AdminLTE v4 | Dashboard" />
     <meta name="author" content="ColorlibHQ" />
+    <link rel="icon" href="/static/assets/img/logo.svg" />
     <meta
       name="description"
       content="AdminLTE is a Free Bootstrap 5 Admin Dashboard, 30 example pages using Vanilla JS."
@@ -147,7 +148,7 @@
                   </a>
                 </li>
                 <li class="nav-item">
-                    <a href="/chamados" class="nav-link">
+                    <a href="/chamado/listagem" class="nav-link">
                         <i class="nav-icon bi bi-chat-dots-fill"></i>
                         <p>Chamados</p>
                     </a>
@@ -187,6 +188,13 @@
         </div>
         <div class="app-content">
           <div class="container-fluid">
+            {% if messages %}
+            {% for message in messages %}
+              <div class="alert mt-5 {% if message.tags == 'error' %}alert-danger{% elif message.tags %} alert-{{ message.tags }}{% else %} alert-info {% endif %}"
+                role="alert">{{ message }}
+              </div>
+            {% endfor %}
+            {% endif %}
             {% block content %}
             
             {% endblock %}
