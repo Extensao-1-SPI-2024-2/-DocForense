@@ -6,3 +6,4 @@ python-decouple
 gunicorn
 mysqlclient
 Pillow
+bs4
