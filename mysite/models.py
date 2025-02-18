@@ -1,6 +1,14 @@
 from django.db import models
 from django.contrib.auth.models import User
 
+class Media(models.Model):
+    id = models.AutoField(primary_key=True)
+    nome = models.CharField(max_length=100)
+    imagem = models.ImageField(upload_to='imagens/')
+
+    def __str__(self):
+        return self.nome
+    
 class Modelo(models.Model):
     TYPE_CHOICES = [
         (1, 'Público'),
@@ -13,6 +21,7 @@ class Modelo(models.Model):
     type = models.PositiveSmallIntegerField(choices=TYPE_CHOICES, default=1)
     date_inclusion = models.DateTimeField(auto_now_add=True)
     user_inclusion = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    cabecalho = models.ForeignKey(Media, on_delete=models.SET_NULL, null=True, blank=True)
 
     class Meta:
         db_table = 'modelo'
@@ -130,4 +139,3 @@ class RespostaChamado(models.Model):
 
     def __str__(self):
         return f"Resposta de {self.autor.username if self.autor else 'Usuário desconhecido'} em {self.date_inclusion}"
-

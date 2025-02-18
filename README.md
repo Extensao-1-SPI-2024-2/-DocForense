@@ -42,12 +42,6 @@ Após isso, as seeds devem ser executadas (após a execução com sucesso das mi
 > python manage.py seed
 ```
 
-Com isso, todas as tabelas devem ser devidamente criadas no banco de dados fornecido ao projeto. Logo em seguida, a aplicação deve ser executada na porta 8000 com o seguinte comando
-
-```
-> py manage.py runserver
-```
-
 Para instalar o módulo responsável por request a API externas
 
 ```
@@ -69,6 +63,17 @@ Para instalar o módulo responsável por gerar o arquivo word
 Para instalar o módulo responsável por tratar variáveis
 ```
 > pip install beautifulsoup4
+```
+
+Para instalar o módulo responsável por a midias do sistema
+```
+pip install Pillow
+```
+
+Com isso, todas as tabelas devem ser devidamente criadas no banco de dados fornecido ao projeto. Logo em seguida, a aplicação deve ser executada na porta 8000 com o seguinte comando
+
+```
+> py manage.py runserver
 ```
 
 # Guia para o desenvolvedor

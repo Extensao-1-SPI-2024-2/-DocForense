@@ -16,23 +16,27 @@
   </div>
 
   <div class="card p-4">
-    <form id="form-modelo" method="POST" action="/modelo/laudo/salvar">
+    <form enctype="multipart/form-data" id="form-modelo" method="POST" action="/modelo/laudo/salvar">
       {% csrf_token %}
       <div class="mb-3">
         <label for="descricaoModelo" class="form-label">Descrição do Modelo*</label>
         <input type="text" name="name" class="form-control" id="descricaoModelo" maxlength="100" required placeholder="Descrição do texto..." />
       </div>
-        <div class="mb-3">
-            <label for="visibilidadeModelo" class="form-label">Visibilidade*</label>
-            <select name="type" id="visibilidadeModelo" required class="form-select">
-                <option value="">Selecione uma opção...</option>
-                {% for value, label in type_choices %}
-                    <option value="{{ value }}" {% if modelo and modelo.type == value %}selected{% endif %}>
-                        {{ label }}
-                    </option>
-                {% endfor %}
-            </select>
-        </div>
+      <div class="mb-3">
+        <label for="cabecalho" class="form-label">Cabeçalho</label>
+        <input name="cabecalho" accept="image/png, image/jpeg" class="form-control" type="file" id="cabecalho">
+      </div>
+      <div class="mb-3">
+          <label for="visibilidadeModelo" class="form-label">Visibilidade*</label>
+          <select name="type" id="visibilidadeModelo" required class="form-select">
+              <option value="">Selecione uma opção...</option>
+              {% for value, label in type_choices %}
+                  <option value="{{ value }}" {% if modelo and modelo.type == value %}selected{% endif %}>
+                      {{ label }}
+                  </option>
+              {% endfor %}
+          </select>
+      </div>
       <textarea name="value"></textarea>
     </form>
   </div>

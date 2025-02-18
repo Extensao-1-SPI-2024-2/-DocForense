@@ -2,10 +2,9 @@ import json
 from django.http import JsonResponse
 from django.contrib.auth import authenticate, login, logout
 from .services import GalileuAPIService
-from django.http import HttpResponse
+from django.http import HttpResponse, FileResponse, HttpResponseNotFound
 from django.shortcuts import render, get_object_or_404, redirect
-from django.http import HttpResponse
-from .models import Modelo, ModeloVestigio, Variavel, Chamado, RespostaChamado
+from .models import Modelo, ModeloVestigio, Variavel, Chamado, RespostaChamado, Media
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect
@@ -13,15 +12,14 @@ from django.contrib import messages
 from .template_processor import TemplateProcessor
 from .contexto_procedimento_pericial import ContextoProcedimentoPericial
 from datetime import datetime
-from django.http import HttpResponse
 from docx import Document
 from bs4 import BeautifulSoup
 import os
 from django.conf import settings
-from docx.shared import Inches, Pt
-from docx.enum.text import WD_ALIGN_PARAGRAPH
+from docx.shared import Inches
 from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
+from PIL import Image
 
 @login_required(login_url='/login')
 def procedimento_pericial(request, id):
@@ -197,18 +195,41 @@ def create_modelo(request):
         name = request.POST.get('name')
         value = request.POST.get('value')
         type = request.POST.get('type')
+        cabecalho_file = request.FILES.get('cabecalho')
 
         if not all([name, value, type]):
             messages.error(request, "Todos os campos são obrigatórios.")
             return redirect('/modelo/laudo/criar')
+        
+        if cabecalho_file:
+            valid_extensions = ['image/png', 'image/jpeg']
+            try:
+                img = Image.open(cabecalho_file)
+                img_format = img.format.lower()
+
+                if f"image/{img_format}" not in valid_extensions:
+                    messages.error(request, "O arquivo deve ser uma imagem PNG, JPG ou JPEG.")
+                    return redirect('/modelo/laudo/criar')
+
+            except Exception:
+                messages.error(request, "Arquivo inválido. Certifique-se de que é uma imagem válida.")
+                return redirect('/modelo/laudo/criar')
 
         try:
-            Modelo.objects.create(
+            modelo = Modelo.objects.create(
                 name=name,
                 value=value,
                 type=type,
                 user_inclusion=request.user
             )
+
+            if cabecalho_file:
+                media = Media.objects.create(
+                    nome=cabecalho_file.name,
+                    imagem=cabecalho_file
+                )
+                modelo.cabecalho = media
+                modelo.save()
 
             messages.success(request, "Modelo criado com sucesso!")
             return redirect('/modelo/laudo/listagem')
@@ -308,6 +329,19 @@ def listagemVestigio(request):
         'modelos': modelos
     })
 
+@login_required(login_url='/login')
+def download_cabecalho(request, modelo_id):
+    modelo = get_object_or_404(Modelo, id=modelo_id)
+
+    if not modelo.cabecalho or not modelo.cabecalho.imagem:
+        return HttpResponseNotFound("Cabeçalho não encontrado.")
+    
+    file_path = os.path.join(settings.MEDIA_ROOT, modelo.cabecalho.imagem.name)
+
+    if not os.path.exists(file_path):
+        return HttpResponseNotFound("O arquivo não está mais disponível.")
+
+    return FileResponse(open(file_path, 'rb'), as_attachment=True, filename=modelo.cabecalho.nome)
 
 @login_required(login_url='/login')
 def editar_modelo(request, modelo_id):
@@ -317,6 +351,8 @@ def editar_modelo(request, modelo_id):
         name = request.POST.get('name')
         value = request.POST.get('value')
         type_view = request.POST.get('type')
+        cabecalho = request.FILES.get('cabecalho')
+        remover_cabecalho = request.POST.get('remover_cabecalho')
 
         if not all([name, value, type_view]):
             messages.error(request, "Todos os campos são obrigatórios.")
@@ -326,6 +362,15 @@ def editar_modelo(request, modelo_id):
             modelo.name = name
             modelo.value = value
             modelo.type = type_view
+
+            if remover_cabecalho and modelo.cabecalho:
+                modelo.cabecalho.delete()
+                modelo.cabecalho = None
+
+            if cabecalho:
+                media = Media.objects.create(nome=cabecalho.name, imagem=cabecalho)
+                modelo.cabecalho = media
+
             modelo.save()
 
             messages.success(request, "Modelo atualizado com sucesso!")

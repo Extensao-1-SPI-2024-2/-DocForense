@@ -50,4 +50,5 @@ urlpatterns = [
     path('configuracao/superuser/remove/<int:user_id>/', views.remover_superuser, name='remover_superuser'),
     path('configuracao/staff/add/<int:user_id>/', views.adicionar_staff, name='adicionar_staff'),
     path('configuracao/staff/remove/<int:user_id>/', views.remover_staff, name='remover_staff'),
+    path('modelo/laudo/download_cabecalho/<int:modelo_id>/', views.download_cabecalho, name='download_cabecalho'),
 ]
