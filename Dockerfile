@@ -6,6 +6,8 @@ RUN apt-get update && apt-get install -y netcat-openbsd
 
 COPY . .
 
+RUN apt-get update && apt-get install -y default-libmysqlclient-dev build-essential
+
 RUN pip install -r requirements.txt
 
 RUN chmod +x /app/entrypoint.sh
