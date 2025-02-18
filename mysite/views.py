@@ -16,7 +16,12 @@ from datetime import datetime
 from django.http import HttpResponse
 from docx import Document
 from bs4 import BeautifulSoup
-
+import os
+from django.conf import settings
+from docx.shared import Inches, Pt
+from docx.enum.text import WD_ALIGN_PARAGRAPH
+from docx.oxml import OxmlElement
+from docx.oxml.ns import qn
 
 @login_required(login_url='/login')
 def procedimento_pericial(request, id):
@@ -31,6 +36,21 @@ def procedimento_pericial(request, id):
     else:
         return JsonResponse({'error': 'Method not allowed'}, status=405)
 
+def adicionar_campo(paragrafo, field_type):
+    run = paragrafo.add_run()
+    fldChar1 = OxmlElement('w:fldChar')
+    fldChar1.set(qn('w:fldCharType'), 'begin')
+
+    instrText = OxmlElement('w:instrText')
+    instrText.text = field_type
+    instrText.set(qn('xml:space'), 'preserve')
+
+    fldChar2 = OxmlElement('w:fldChar')
+    fldChar2.set(qn('w:fldCharType'), 'end')
+
+    run._r.append(fldChar1)
+    run._r.append(instrText)
+    run._r.append(fldChar2)
 
 @login_required(login_url='/login')
 def gerar_arquivo_word_laudo(request):
@@ -41,6 +61,39 @@ def gerar_arquivo_word_laudo(request):
             return HttpResponse("Nenhum HTML foi enviado.", status=400)
 
         doc = Document()
+
+        # Adicionar cabeçalho
+        secao = doc.sections[0]
+        secao.header_distance = Inches(0.1)
+        cabecalho = secao.header  # Obtém a seção de cabeçalho do documento
+        cabecalho_paragrafo = cabecalho.paragraphs[0] if cabecalho.paragraphs else cabecalho.add_paragraph()
+
+        secao.left_margin = Inches(0.8)
+        secao.right_margin = Inches(0.8)
+        
+        # Caminho da imagem do cabeçalho
+        caminho_imagem = os.path.join(settings.BASE_DIR, 'mysite/static/cabecalho.png')
+        
+        if os.path.exists(caminho_imagem):
+            largura_pagina = secao.page_width - secao.left_margin - secao.right_margin
+
+            for par in cabecalho.paragraphs:
+                par.clear()
+
+            cabecalho_paragrafo = cabecalho.add_paragraph()
+            cabecalho_paragrafo.add_run().add_picture(caminho_imagem, width=largura_pagina)
+
+        # RODAPÉ COM PAGINAÇÃO
+        rodape = secao.footer
+        paragrafo_rodape = rodape.paragraphs[0] if rodape.paragraphs else rodape.add_paragraph()
+        paragrafo_rodape.alignment = 2  # Alinha à direita
+
+        paragrafo_rodape.add_run("Página ")
+        adicionar_campo(paragrafo_rodape, "PAGE")  # Número da página atual
+        paragrafo_rodape.add_run(" de ")
+        adicionar_campo(paragrafo_rodape, "NUMPAGES")  # Total de páginas
+
+
 
         soup = BeautifulSoup(html_content, 'html.parser')
 
@@ -582,3 +635,64 @@ def fechar_chamado(request, chamado_id):
     else:
         messages.error(request, "Requisição não autorizada.")
         return redirect('/chamado/listagem')
+    
+@login_required(login_url='/login')
+def configuracao(request):
+    if not request.user.is_superuser:
+        messages.error(request, "Painel autorizado somente a super usuários.")
+        return redirect('/')
+    
+    users = User.objects.exclude(id=request.user.id)
+    
+    return render(request, 'configuracao.html', {
+        'login_user': request.user,
+        'users': users
+    })
+
+def adicionar_staff(request, user_id):
+    if not request.user.is_staff:
+        messages.error(request, "Ação autorizada somenta a staff.")
+        return redirect('/')
+    
+    user = get_object_or_404(User, id=user_id)
+    user.is_staff = True
+    user.save()
+    
+    messages.success(request, "Permissões alteradas com sucesso.")
+    return redirect('/configuracoes')
+
+def remover_staff(request, user_id):
+    if not request.user.is_staff:
+        messages.error(request, "Ação autorizada somenta a staff.")
+        return redirect('/')
+    
+    user = get_object_or_404(User, id=user_id)
+    user.is_staff = False
+    user.save()
+    
+    messages.success(request, "Permissões alteradas com sucesso.")
+    return redirect('/configuracoes')
+
+def adicionar_superuser(request, user_id):
+    if not request.user.is_superuser:
+        messages.error(request, "Ação autorizada somenta a super usuários.")
+        return redirect('/')
+    
+    user = get_object_or_404(User, id=user_id)
+    user.is_superuser = True
+    user.save()
+    
+    messages.success(request, "Permissões alteradas com sucesso.")
+    return redirect('/configuracoes')
+
+def remover_superuser(request, user_id):
+    if not request.user.is_superuser:
+        messages.error(request, "Ação autorizada somenta a super usuários.")
+        return redirect('/')
+    
+    user = get_object_or_404(User, id=user_id)
+    user.is_superuser = False
+    user.save()
+    
+    messages.success(request, "Permissões alteradas com sucesso.")
+    return redirect('/configuracoes')

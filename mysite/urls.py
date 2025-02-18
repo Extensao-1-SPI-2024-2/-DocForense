@@ -45,4 +45,9 @@ urlpatterns = [
     path('chamado/<int:chamado_id>/', views.analisar_chamado, name='analisar_chamado'),
     path('chamado/responder/<int:chamado_id>/', views.responder_chamado, name='responder_chamado'),
     path('chamado/fechar/<int:chamado_id>/', views.fechar_chamado, name='fechar_chamado'),
+    path('configuracoes/', views.configuracao, name='configuracao'),
+    path('configuracao/superuser/add/<int:user_id>/', views.adicionar_superuser, name='adicionar_superuser'),
+    path('configuracao/superuser/remove/<int:user_id>/', views.remover_superuser, name='remover_superuser'),
+    path('configuracao/staff/add/<int:user_id>/', views.adicionar_staff, name='adicionar_staff'),
+    path('configuracao/staff/remove/<int:user_id>/', views.remover_staff, name='remover_staff'),
 ]
