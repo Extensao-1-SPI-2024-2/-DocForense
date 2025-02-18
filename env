@@ -1,6 +1,0 @@
-MYSQL_DATABASE=docforense
-MYSQL_USER=ifto
-MYSQL_PASSWORD=ifto
-MYSQL_ROOT_PASSWORD=ifto2025
-API_GALILEU_BEARER_TOKEN=ujWWSSg01DStXCSHFrnVFJnG/bYb9Q+TFbiJL65GH/g=
-API_GALILEU_HOST=https://galileu-homologacao.ssp.to.gov.br/galileiWebService
