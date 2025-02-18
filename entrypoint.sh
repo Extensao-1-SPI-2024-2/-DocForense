@@ -1,6 +1,6 @@
 #!/bin/sh
 
-while ! nc -z $MYSQL_HOST $MYSQL_PORT; do
+while ! nc -z $MYSQL_HOST "${MYSQL_PORT:-3306}"; do
   sleep 1
 done
 
