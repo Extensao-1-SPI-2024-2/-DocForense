@@ -1,6 +1,6 @@
 #!/bin/sh
 
-while ! nc -z db 3306; do
+while ! nc -z $MYSQL_HOST $MYSQL_PORT; do
   sleep 1
 done
 
